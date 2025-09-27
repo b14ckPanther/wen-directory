@@ -1,7 +1,8 @@
-// src/app/page.tsx
+'use client';
 
-import React from 'react';
-import CategoryGrid from '@/components/CategoryGrid'; // 1. Import the new component
+import React, { useState } from 'react';
+import CategoryGrid from '@/components/CategoryGrid';
+import Header from '@/components/Header';
 
 const SearchIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -10,8 +11,13 @@ const SearchIcon = () => (
 );
 
 export default function Home() {
+  const [selectedLocation, setSelectedLocation] = useState('كل المواقع');
+
   return (
     <>
+      {/* Pass state down to Header */}
+      <Header selectedLocation={selectedLocation} setSelectedLocation={setSelectedLocation} />
+
       {/* Hero Section */}
       <section className="w-full text-center py-20 md:py-32 bg-navy">
         <div className="container mx-auto px-4">
@@ -21,6 +27,15 @@ export default function Home() {
           <p className="text-lg md:text-xl text-gray mt-4 max-w-2xl mx-auto">
             وين هو دليلك الشامل لأفضل الخدمات والمحترفين في مجتمعك.
           </p>
+
+          {/* ✅ Show selected location */}
+          <div className="mt-6">
+            <span className="px-4 py-2 bg-gold/10 text-gold font-semibold rounded-full">
+              الموقع الحالي: {selectedLocation}
+            </span>
+          </div>
+
+          {/* Search Form (kept as is) */}
           <div className="mt-8 max-w-2xl mx-auto">
             <form className="relative">
               <input
@@ -40,7 +55,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 2. Add the Category Grid component here */}
       <CategoryGrid /> 
     </>
   );
