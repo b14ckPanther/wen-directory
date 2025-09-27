@@ -12,13 +12,12 @@ import {
   HandCoins, Settings2, Landmark, Calculator, DraftingCompass, Users,
   Megaphone, Code, PenTool, ShoppingCart, Shirt, Laptop, Sofa, Gift, BookOpen,
   ToyBrick, Dumbbell, Camera, Music, Clapperboard, Palette,
-  GraduationCap, School, BookUser, Library, Languages, Cat,
-  Dog, Bone, Bird, Gamepad2, KeyRound, 
-  TriangleAlert, Bike, Sailboat, ParkingCircle, Building 
+  GraduationCap, School, BookUser, Library, Languages, Cat, Watch, Cross,
+  Dog, Bone, Bird, Gamepad2, KeyRound, Factory, Printer, Sprout, Leaf, Recycle, Tractor,
+  TriangleAlert, Bike, Sailboat, ParkingCircle, Building, Brush, Gem, Drama,
+  ClipboardList , Flower, Mail, ShieldCheck, TrendingUp, Home, Repeat, Hotel, Plane, Map, Ticket, Stamp,Warehouse,
 } from 'lucide-react';
-import { desc } from 'framer-motion/client';
 
-// The key change is here: the 'icon' property is the component reference (e.g., UtensilsCrossed), not the rendered JSX (<UtensilsCrossed />).
 const categorySections = [
   {
     title: 'مطاعم ومأكولات',
@@ -91,25 +90,25 @@ const categorySections = [
     ],
   },
   {
-  title: 'سيارات ونقل',
-  description: 'اكتشف أفضل خدمات السيارات والنقل في منطقتك.',
-  image: 'https://images.unsplash.com/photo-1639927676452-984f8210befc?q=80&w=928&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-  categories: [
-    { name: 'ميكانيكي سيارات', icon: Wrench },
-    { name: 'غسيل وتفصيل سيارات', icon: Sparkles },
-    { name: 'تأجير سيارات', icon: KeyRound },
-    { name: 'بيع سيارات', icon: HandCoins },
-    { name: 'قطع غيار سيارات', icon: Settings2 },
-    { name: 'خدمات القطر (الجر)', icon: TriangleAlert },
-    { name: 'محلات إطارات', icon: Settings2 },
-    { name: 'تعليم قيادة', icon: GraduationCap },
-    { name: 'خدمات نقل وشحن', icon: Truck },
-    { name: 'سائقو سيارات أجرة', icon: CarTaxiFront },
-    { name: 'دراجات نارية', icon: Bike },
-    { name: 'قوارب ويخوت', icon: Sailboat },
-    { name: 'مواقف سيارات', icon: ParkingCircle },
-  ],
-},
+    title: 'سيارات ونقل',
+    description: 'اكتشف أفضل خدمات السيارات والنقل في منطقتك.',
+    image: 'https://images.unsplash.com/photo-1639927676452-984f8210befc?q=80&w=928&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+    categories: [
+      { name: 'ميكانيكي سيارات', icon: Wrench },
+      { name: 'غسيل وتفصيل سيارات', icon: Sparkles },
+      { name: 'تأجير سيارات', icon: KeyRound },
+      { name: 'بيع سيارات', icon: HandCoins },
+      { name: 'قطع غيار سيارات', icon: Settings2 },
+      { name: 'خدمات القطر (الجر)', icon: TriangleAlert },
+      { name: 'محلات إطارات', icon: Settings2 },
+      { name: 'تعليم قيادة', icon: GraduationCap },
+      { name: 'خدمات نقل وشحن', icon: Truck },
+      { name: 'سائقو سيارات أجرة', icon: CarTaxiFront },
+      { name: 'دراجات نارية', icon: Bike },
+      { name: 'قوارب ويخوت', icon: Sailboat },
+      { name: 'مواقف سيارات', icon: ParkingCircle },
+    ],
+  },
   {
     title: 'خدمات مهنية وقانونية',
     description: 'أفضل الخدمات المهنية والقانونية في منطقتك.',
@@ -211,25 +210,151 @@ const categorySections = [
       { name: 'فنون قتالية', icon: PersonStanding },
     ],
   },
+  {
+    title: 'عقارات وأملاك',
+    description: 'ابحث عن منزلك القادم أو استثمر في العقارات مع أفضل الخبراء.',
+    image: 'https://images.unsplash.com/photo-1722487631997-cf1e0f92c2c4?q=80&w=1740&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+    categories: [
+      { name: 'وكلاء عقارات', icon: Building },
+      { name: 'شقق للبيع', icon: HandCoins },
+      { name: 'شقق للإيجار', icon: KeyRound },
+      { name: 'إدارة الممتلكات', icon: ClipboardList }, // Corrected icon
+      { name: 'مقاولات بناء', icon: HardHat },
+      { name: 'مستشارون عقاريون', icon: Users },
+    ],
+  },
+  {
+    title: 'عائلتك وأطفالك',
+    description: 'كل ما تحتاجه عائلتك من رعاية، تعليم، وترفيه للأطفال.',
+    image: 'https://images.unsplash.com/photo-1632052998134-ee83afa9cced?q=80&w=1620&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+    categories: [
+      { name: 'حضانات ورياض أطفال', icon: School },
+      { name: 'جليسات أطفال', icon: PersonStanding },
+      { name: 'مراكز ألعاب للأطفال', icon: ToyBrick },
+      { name: 'مستشارون أسريون', icon: Users },
+      { name: 'مخيمات صيفية', icon: PartyPopper },
+      { name: 'محلات ملابس أطفال', icon: Shirt },
+    ],
+  },
+  {
+    title: 'خدمات حكومية ومجتمعية',
+    description: 'دليلك للوصول إلى الخدمات العامة والمؤسسات الحكومية بسهولة.',
+    image: 'https://images.unsplash.com/photo-1600880292089-90a7e086ee0c?q=80&w=774&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+    categories: [
+      { name: 'مكاتب بريد', icon: Landmark },
+      { name: 'مكتبات عامة', icon: Library },
+      { name: 'جمعيات خيرية', icon: Handshake },
+      { name: 'مراكز مجتمعية', icon: Building },
+      { name: 'سفارات وقنصليات', icon: Landmark },
+      { name: 'خدمات الطوارئ', icon: TriangleAlert },
+    ],
+  },
+{
+  title: 'أعراس ومناسبات خاصة',
+  description: 'كل ما تحتاجه لتنظيم يومك المميز، من قاعات الأفراح إلى المصورين.',
+  image: 'https://images.unsplash.com/photo-1606800052052-a08af7148866?q=80&w=1740&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+  categories: [
+    { name: 'قاعات أفراح', icon: PartyPopper },
+    { name: 'منظمو أعراس', icon: ClipboardList },
+    { name: 'فساتين زفاف', icon: Shirt },
+    { name: 'مصورو أعراس', icon: Camera },
+    { name: 'بطاقات دعوة', icon: Mail },
+    { name: 'زهور للمناسبات', icon: Flower },
+  ],
+},
+{
+  title: 'تمويل وتأمين',
+  description: 'خبراء لمساعدتك في إدارة أموالك، استثماراتك، وتأمين مستقبلك.',
+  image: 'https://images.unsplash.com/photo-1628348068343-c6a848d2b6dd?q=80&w=1740&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+  categories: [
+    { name: 'بنوك ومصارف', icon: Landmark },
+    { name: 'شركات تأمين', icon: ShieldCheck },
+    { name: 'شركات استثمار', icon: TrendingUp },
+    { name: 'رهن عقاري', icon: Home },
+    { name: 'صرافة', icon: Repeat },
+    { name: 'مستشارون ماليون', icon: HandCoins },
+  ],
+},
+{
+  title: 'سفر وسياحة',
+  description: 'خطط لرحلتك القادمة مع أفضل الفنادق، وكالات السفر، والجولات السياحية.',
+  image: 'https://images.unsplash.com/photo-1490430657723-4d607c1503fc?q=80&w=1740&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+  categories: [
+    { name: 'فنادق ومنتجعات', icon: Hotel },
+    { name: 'وكالات سفر', icon: Plane },
+    { name: 'مرشدون سياحيون', icon: Map },
+    { name: 'تأجير سيارات سياحية', icon: Car },
+    { name: 'مناطق سياحية', icon: Ticket },
+    { name: 'تأشيرات سفر', icon: Stamp },
+  ],
+},
+{
+  title: 'صناعة وتجارة الجملة',
+  description: 'كل ما تحتاجه أعمالك من موردين، معدات صناعية، وخدمات لوجستية.',
+  image: 'https://images.unsplash.com/photo-1578575437130-527eed3abbec?q=80&w=1740&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+  categories: [
+    { name: 'موردون بالجملة', icon: Warehouse },
+    { name: 'معدات صناعية', icon: Factory },
+    { name: 'خدمات لوجستية', icon: Truck },
+    { name: 'مواد بناء', icon: HardHat },
+    { name: 'شركات طباعة', icon: Printer },
+    { name: 'آلات ومكائن', icon: Settings2 },
+  ],
+},
+
+{
+  title: 'فنون وحرف وثقافة',
+  description: 'مساحة للفنانين، الحرفيين، وهواة الثقافة. اكتشف ورش عمل، معارض، ومراكز ثقافية.',
+  image: 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?q=80&w=1740&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+  categories: [
+    { name: 'فنانون تشكيليون', icon: Palette },
+    { name: 'ورش عمل فنية', icon: Brush },
+    { name: 'خزف وفخار', icon: Gem },
+    { name: 'مراكز ثقافية', icon: Landmark },
+    { name: 'حرف يدوية', icon: Scissors },
+    { name: 'مدارس تمثيل', icon: Drama },
+  ],
+},
+
+{
+  title: 'زراعة وبيئة',
+  description: 'مصادر للمزارعين، هواة الحدائق، وكل ما يتعلق بالاستدامة والخدمات البيئية.',
+  image: 'https://images.unsplash.com/photo-1587316807833-7008b6d63a4e?q=80&w=1740&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+  categories: [
+    { name: 'مشاتل ومستلزمات', icon: Sprout },
+    { name: 'مهندسون زراعيون', icon: DraftingCompass },
+    { name: 'مزارع عضوية', icon: Leaf },
+    { name: 'خدمات بيئية', icon: Recycle },
+    { name: 'تربية مواشي', icon: Beef },
+    { name: 'معدات زراعية', icon: Tractor },
+  ],
+},
+
+{
+  title: 'خدمات شخصية ومتنوعة',
+  description: 'لجميع الخدمات اليومية الأساسية التي تحتاجها، من التنظيف الجاف إلى التصليحات الدقيقة.',
+  image: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=1740&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+  categories: [
+    { name: 'تنظيف جاف وغسيل', icon: Shirt },
+    { name: 'تصليح أحذية وحقائب', icon: Wrench },
+    { name: 'تصليح ساعات', icon: Watch },
+    { name: 'تخزين شخصي', icon: Warehouse },
+    { name: 'خدمات كبار السن', icon: Users },
+    { name: 'خدمات جنازة', icon: Cross },
+  ],
+},
+
 ];
 
-// Animation variants for the grid container
 const gridContainerVariants = {
   hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.05, // This creates the staggered effect
-    },
-  },
+  show: { opacity: 1, transition: { staggerChildren: 0.05 } },
 };
 
-// Animation variants for each category item
 const gridItemVariants = {
   hidden: { opacity: 0, y: 20 },
   show: { opacity: 1, y: 0, transition: { duration: 0.3 } },
 };
-
 
 export default function CategoryGrid() {
   const [openSections, setOpenSections] = useState<{[key: string]: boolean}>({});
@@ -246,7 +371,6 @@ export default function CategoryGrid() {
           
           return (
             <div key={section.title} className="mb-8">
-              {/* Clickable Hub Header */}
               <button
                 onClick={() => toggleSection(section.title)}
                 className="w-full relative text-left rounded-lg overflow-hidden group shadow-xl"
@@ -260,7 +384,6 @@ export default function CategoryGrid() {
                   />
                 </div>
                 <div className="absolute inset-0 bg-gradient-to-r from-navy/90 via-navy/70 to-navy/50"></div>
-
                 <div className="relative w-full p-6 md:p-8 text-center">
                   <h2 className="text-3xl md:text-4xl font-bold text-gold">
                     {section.title}
@@ -268,7 +391,6 @@ export default function CategoryGrid() {
                   <p className="text-gray/80 text-base md:text-lg mt-2">
                     {section.description}
                   </p>
-                  {/* Absolutely positioned Chevron. Using 'left-6' for RTL 'start' edge */}
                   <div className="absolute top-1/2 -translate-y-1/2 left-6 text-gold p-2 bg-black/20 rounded-full">
                      <ChevronDown
                         size={32}
@@ -278,7 +400,6 @@ export default function CategoryGrid() {
                 </div>
               </button>
 
-              {/* Collapsible Animated Grid */}
               <AnimatePresence>
                 {isOpen && (
                   <motion.div
