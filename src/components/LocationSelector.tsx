@@ -4,12 +4,10 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, X, MapPin } from 'lucide-react';
 
-// Define a specific type for our regional data structure
 type RegionMap = {
   [key: string]: string[];
 };
 
-// Apply the type to the constant for type safety
 const locationsByRegion: RegionMap = {
   'الشمال': ["حيفا", "عكا", "الناصرة", "شفا عمرو", "طمرة", "سخنين", "عرابة", "كفركنا", "يافة الناصرة", "الرينة", "كفرياسيف", "ابو سنان", "جديدة المكر", "دير الاسد", "نحف", "البعنة", "مجد الكروم", "الرامة", "ساجور", "كابول", "الشيخ دنون", "ترشيحا", "معليا", "فسوطة", "حرفيش", "جولس", "يركا", "بيت جن", "البقيعة", "كوكب ابو الهيجا", "عبلين", "الكعبية", "ابطن", "عرب العرامشة", "عرب النعيم", "راس علي", "الهيب", "الزرازير", "الكمانة", "وادي سلامة"],
   'المركز والمثلث': ["يافا", "اللد", "الرملة", "الطيبة", "الطيرة", "قلنسوة", "كفر قاسم", "كفربرا", "جلجولية", "جت المثلث", "زيمر", "باقة الغربية", "ام الفحم", "عرعرة المثلث", "عارة", "كفرقرع", "معاوية", "مصمص", "سالم", "زلفة", "عين ابراهيم", "ام القطف", "ميسر", "برطعة"],
@@ -31,25 +29,18 @@ export default function LocationSelector({ isOpen, onClose, onSelect }: Location
   const [geoStatus, setGeoStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [geoError, setGeoError] = useState('');
 
-  // Rewritten filtering logic to be fully type-safe without using 'any'
+  // Filtered regions
   const filteredRegions = useMemo(() => {
-    if (!searchTerm) {
-      return locationsByRegion;
-    }
-    
+    if (!searchTerm) return locationsByRegion;
+
     return Object.keys(locationsByRegion).reduce((acc, region) => {
-      const locations = locationsByRegion[region as keyof RegionMap];
+      const locations = locationsByRegion[region];
       const matchingLocations = locations.filter(location =>
         location.toLowerCase().includes(searchTerm.toLowerCase())
       );
-
-      if (matchingLocations.length > 0) {
-        acc[region as keyof RegionMap] = matchingLocations;
-      }
-
+      if (matchingLocations.length > 0) acc[region] = matchingLocations;
       return acc;
     }, {} as RegionMap);
-
   }, [searchTerm]);
 
   const handleSelect = (location: string) => {
@@ -57,6 +48,7 @@ export default function LocationSelector({ isOpen, onClose, onSelect }: Location
     onClose();
   };
 
+  // 🔥 Get Current Location with Reverse Geocoding
   const handleGetCurrentLocation = () => {
     setGeoStatus('loading');
     setGeoError('');
@@ -68,14 +60,33 @@ export default function LocationSelector({ isOpen, onClose, onSelect }: Location
     }
 
     navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setGeoStatus('success');
-        console.log('Lat:', position.coords.latitude, 'Lon:', position.coords.longitude);
-        handleSelect('موقعي الحالي');
+      async (position) => {
+        try {
+          const { latitude, longitude } = position.coords;
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&accept-language=ar`
+          );
+          const data = await response.json();
+
+          const locationName =
+            data.address.city ||
+            data.address.town ||
+            data.address.village ||
+            data.address.hamlet ||
+            data.display_name ||
+            'موقع غير معروف';
+
+          setGeoStatus('success');
+          handleSelect(locationName);
+        } catch (err) {
+          console.error(err);
+          setGeoStatus('error');
+          setGeoError('تعذر تحديد اسم الموقع.');
+        }
       },
       (error) => {
         setGeoStatus('error');
-        switch(error.code) {
+        switch (error.code) {
           case error.PERMISSION_DENIED:
             setGeoError('لقد رفضت السماح بالوصول إلى موقعك.');
             break;
@@ -93,6 +104,7 @@ export default function LocationSelector({ isOpen, onClose, onSelect }: Location
     );
   };
 
+  // Close modal with ESC
   useEffect(() => {
     const handleEsc = (event: KeyboardEvent) => {
       if (event.key === 'Escape') onClose();
@@ -118,15 +130,20 @@ export default function LocationSelector({ isOpen, onClose, onSelect }: Location
             transition={{ duration: 0.3, ease: 'easeOut' }}
             className="bg-[#1B2A41] w-full max-w-2xl h-[90vh] max-h-[700px] rounded-2xl shadow-2xl flex flex-col border border-gold/20"
           >
+            {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-gold/10 flex-shrink-0">
               <h2 className="text-xl font-bold text-gold">اختر موقعك</h2>
-              <button onClick={onClose} className="text-gray hover:text-gold transition-colors p-2 rounded-full hover:bg-gold/10">
+              <button
+                onClick={onClose}
+                className="text-gray hover:text-gold transition-colors p-2 rounded-full hover:bg-gold/10"
+              >
                 <X size={28} />
               </button>
             </div>
 
+            {/* Search + Current Location */}
             <div className="p-4 flex-shrink-0 space-y-4">
-              <button 
+              <button
                 onClick={handleGetCurrentLocation}
                 disabled={geoStatus === 'loading'}
                 className="w-full flex items-center justify-center gap-3 bg-gold/10 text-gold font-semibold py-3 px-4 rounded-lg border border-gold/20 hover:bg-gold/20 transition-colors disabled:opacity-50"
@@ -135,7 +152,7 @@ export default function LocationSelector({ isOpen, onClose, onSelect }: Location
                 {geoStatus === 'loading' ? 'جاري التحديد...' : 'استخدام موقعي الحالي'}
               </button>
               {geoError && <p className="text-red-400 text-sm text-center">{geoError}</p>}
-              
+
               <div className="relative">
                 <input
                   type="text"
@@ -150,6 +167,7 @@ export default function LocationSelector({ isOpen, onClose, onSelect }: Location
               </div>
             </div>
 
+            {/* Regions + Locations */}
             <div className="flex-grow overflow-y-auto p-4">
               {Object.entries(filteredRegions).map(([region, locations]) => (
                 <div key={region} className="mb-4">
@@ -174,4 +192,3 @@ export default function LocationSelector({ isOpen, onClose, onSelect }: Location
     </AnimatePresence>
   );
 }
-
