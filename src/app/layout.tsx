@@ -13,7 +13,19 @@ export const metadata: Metadata = {
   title: 'Wen - وين',
   description: 'دليلك لأفضل الخدمات في مجتمعك',
   manifest: '/manifest.json',
-  icons: { apple: '/apple-icon.png' },
+  icons: {
+    icon: [
+      { url: '/icon-192x192.png', type: 'image/png', sizes: '192x192' },
+      { url: '/icon-512x512.png', type: 'image/png', sizes: '512x512' },
+    ],
+    apple: [
+      { url: '/apple-icon-180.png', sizes: '180x180', type: 'image/png' },
+      { url: '/apple-icon-167.png', sizes: '167x167', type: 'image/png' },
+      { url: '/apple-icon-152.png', sizes: '152x152', type: 'image/png' },
+      { url: '/apple-icon-120.png', sizes: '120x120', type: 'image/png' },
+      { url: '/apple-icon-76.png', sizes: '76x76', type: 'image/png' },
+    ],
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -21,7 +33,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="ar" dir="rtl" className={`${notoKufi.variable} ${ruwudu.variable} ${dancingScript.variable}`}>
       <body className={`${notoKufi.className} bg-navy text-gray`}>
         <main>{children}</main>
-               <ChatWidget /> 
+        <ChatWidget />
         <Footer />
       </body>
     </html>

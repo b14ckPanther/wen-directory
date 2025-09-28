@@ -1,7 +1,6 @@
 'use client';
 
 import Header from '@/components/Header';
-import Footer from '@/components/Footer';
 import CategoryGrid from '@/components/CategoryGrid';
 import { useState } from 'react';
 
