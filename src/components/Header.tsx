@@ -7,10 +7,11 @@ import {
   UserCircle,
   PlusCircle,
   X,
-  Home,
   LayoutGrid,
   MapPin,
 } from 'lucide-react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import LocationSelector from '@/components/LocationSelector';
 
 type HeaderProps = {
@@ -24,6 +25,7 @@ export default function Header({
 }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLocationOpen, setIsLocationOpen] = useState(false);
+  const pathname = usePathname();
 
   // Prevent background scrolling when a modal is open
   useEffect(() => {
@@ -38,9 +40,10 @@ export default function Header({
     };
   }, [isMenuOpen, isLocationOpen]);
 
+  // Only show "الرئيسية" if not already on home
   const navLinks = [
-    { href: '#', text: 'الرئيسية', icon: Home },
-    { href: '#', text: 'الفئات', icon: LayoutGrid },
+    ...(pathname !== '/' ? [{ href: '/', text: 'الرئيسية' }] : []),
+  { href: '/categories', text: 'الفئات', icon: LayoutGrid },
   ];
 
   return (
@@ -50,22 +53,22 @@ export default function Header({
         <nav className="container mx-auto flex items-center justify-between p-4 h-20 text-gray">
           {/* Left Section */}
           <div className="flex items-center gap-8">
-            <div className="text-3xl font-bold text-gold">
+            <Link href="/" className="text-3xl font-bold text-gold hover:text-yellow-400 transition">
               <span className="font-dancing text-4xl">Wen</span>
-            </div>
+            </Link>
 
             <div className="hidden lg:flex items-center gap-6 font-semibold">
               {navLinks.map((link) => {
                 const Icon = link.icon;
                 return (
-                  <a
+                  <Link
                     key={link.text}
                     href={link.href}
                     className="flex items-center gap-2 text-gray hover:text-gold transition-colors duration-300"
                   >
-                    <Icon size={20} />
+                    {Icon && <Icon size={20} />}
                     {link.text}
-                  </a>
+                  </Link>
                 );
               })}
             </div>
@@ -97,22 +100,21 @@ export default function Header({
 
           {/* Right Section */}
           <div className="hidden md:flex items-center gap-4">
-        <a
-  href="/register"
-  className="flex items-center gap-2 text-gray hover:text-gold transition-colors font-semibold"
->
-  <PlusCircle size={20} />
-  انضم لنا
-</a>
+            <Link
+              href="/register"
+              className="flex items-center gap-2 text-gray hover:text-gold transition-colors font-semibold"
+            >
+              <PlusCircle size={20} />
+              انضم لنا
+            </Link>
 
-       <a
-  href="/login"
-  className="bg-gradient-to-br from-gold to-yellow-500 text-navy font-bold py-2.5 px-6 rounded-full hover:opacity-90 transition-all flex items-center gap-2 shadow-lg shadow-gold/20 transform hover:scale-105"
->
-  <UserCircle size={20} />
-  تسجيل الدخول
-</a>
-
+            <Link
+              href="/login"
+              className="bg-gradient-to-br from-gold to-yellow-500 text-navy font-bold py-2.5 px-6 rounded-full hover:opacity-90 transition-all flex items-center gap-2 shadow-lg shadow-gold/20 transform hover:scale-105"
+            >
+              <UserCircle size={20} />
+              تسجيل الدخول
+            </Link>
           </div>
 
           {/* Mobile Buttons */}
@@ -141,9 +143,9 @@ export default function Header({
       >
         <div className="container mx-auto p-4 flex flex-col h-full">
           <div className="flex items-center justify-between mb-10">
-            <div className="text-2xl font-bold text-gold">
+            <Link href="/" className="text-2xl font-bold text-gold hover:text-yellow-400 transition">
               <span className="font-dancing text-3xl">Wen</span>
-            </div>
+            </Link>
             <button
               onClick={() => setIsMenuOpen(false)}
               className="text-gray hover:text-gold transition-colors p-2"
@@ -167,34 +169,34 @@ export default function Header({
             {navLinks.map((link) => {
               const Icon = link.icon;
               return (
-                <a
+                <Link
                   key={link.text}
                   href={link.href}
                   className="w-full text-center p-4 rounded-lg flex items-center justify-center gap-3 text-gray hover:text-navy hover:bg-gold transition-all"
                 >
-                  <Icon size={24} />
+                  {Icon && <Icon size={24} />}
                   {link.text}
-                </a>
+                </Link>
               );
             })}
-         <a
-  href="/register"
-  className="flex items-center gap-2 text-gray hover:text-gold transition-colors font-semibold"
->
-  <PlusCircle size={20} />
-  انضم لنا
-</a>
 
+            <Link
+              href="/register"
+              className="flex items-center gap-2 text-gray hover:text-gold transition-colors font-semibold"
+            >
+              <PlusCircle size={20} />
+              انضم لنا
+            </Link>
           </div>
 
           <div className="py-6">
-            <a
-              href="#"
+            <Link
+              href="/login"
               className="w-full p-4 rounded-lg flex items-center justify-center gap-3 text-lg font-semibold text-gold border-2 border-gold hover:bg-gold hover:text-navy transition-all"
             >
               <UserCircle size={24} />
               تسجيل الدخول
-            </a>
+            </Link>
           </div>
         </div>
       </div>
