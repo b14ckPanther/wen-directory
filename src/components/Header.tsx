@@ -97,17 +97,22 @@ export default function Header({
 
           {/* Right Section */}
           <div className="hidden md:flex items-center gap-4">
-            <a
-              href="#"
-              className="flex items-center gap-2 text-gray hover:text-gold transition-colors font-semibold"
-            >
-              <PlusCircle size={20} />
-              انضم لنا
-            </a>
-            <button className="bg-gradient-to-br from-gold to-yellow-500 text-navy font-bold py-2.5 px-6 rounded-full hover:opacity-90 transition-all flex items-center gap-2 shadow-lg shadow-gold/20 transform hover:scale-105">
-              <UserCircle size={20} />
-              تسجيل الدخول
-            </button>
+        <a
+  href="/register"
+  className="flex items-center gap-2 text-gray hover:text-gold transition-colors font-semibold"
+>
+  <PlusCircle size={20} />
+  انضم لنا
+</a>
+
+       <a
+  href="/login"
+  className="bg-gradient-to-br from-gold to-yellow-500 text-navy font-bold py-2.5 px-6 rounded-full hover:opacity-90 transition-all flex items-center gap-2 shadow-lg shadow-gold/20 transform hover:scale-105"
+>
+  <UserCircle size={20} />
+  تسجيل الدخول
+</a>
+
           </div>
 
           {/* Mobile Buttons */}
@@ -172,13 +177,14 @@ export default function Header({
                 </a>
               );
             })}
-            <a
-              href="#"
-              className="w-full text-center p-4 rounded-lg flex items-center justify-center gap-3 text-gray hover:text-navy hover:bg-gold transition-all"
-            >
-              <PlusCircle size={24} />
-              انضم لنا
-            </a>
+         <a
+  href="/register"
+  className="flex items-center gap-2 text-gray hover:text-gold transition-colors font-semibold"
+>
+  <PlusCircle size={20} />
+  انضم لنا
+</a>
+
           </div>
 
           <div className="py-6">
