@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import CategoryGrid from '@/components/CategoryGrid';
 import Header from '@/components/Header';
+import LocationSelector from '@/components/LocationSelector';
 
 const SearchIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -12,6 +13,8 @@ const SearchIcon = () => (
 
 export default function Home() {
   const [selectedLocation, setSelectedLocation] = useState('كل المواقع');
+    const [isLocationSelectorOpen, setIsLocationSelectorOpen] = useState(false); // ✅ Modal state
+
 
   return (
     <>
@@ -29,12 +32,14 @@ export default function Home() {
           </p>
 
           {/* ✅ Show selected location */}
-          <div className="mt-6">
-            <span className="px-4 py-2 bg-gold/10 text-gold font-semibold rounded-full">
+            <div className="mt-6">
+            <button
+              onClick={() => setIsLocationSelectorOpen(true)} // ✅ Open modal
+              className="px-4 py-2 bg-gold/10 text-gold font-semibold rounded-full hover:bg-gold/20 transition"
+            >
               الموقع الحالي: {selectedLocation}
-            </span>
+            </button>
           </div>
-
           {/* Search Form (kept as is) */}
           <div className="mt-8 max-w-2xl mx-auto">
             <form className="relative">
@@ -56,6 +61,15 @@ export default function Home() {
       </section>
 
       <CategoryGrid /> 
+            {/* ✅ Location Selector Modal */}
+      <LocationSelector
+        isOpen={isLocationSelectorOpen}
+        onClose={() => setIsLocationSelectorOpen(false)}
+        onSelect={(location) => {
+          setSelectedLocation(location);
+          setIsLocationSelectorOpen(false);
+        }}
+      />
     </>
   );
 }
