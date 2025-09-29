@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react'; // Removed useState as it's no longer needed for the modal
 import CategoryGrid from '@/components/CategoryGrid';
-import Header from '@/components/Header';
-import LocationSelector from '@/components/LocationSelector';
+// REMOVE: No need to import LocationSelector here anymore
+import { useLocation } from '@/context/LocationContext';
 
 const SearchIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -12,16 +12,13 @@ const SearchIcon = () => (
 );
 
 export default function Home() {
-  const [selectedLocation, setSelectedLocation] = useState('كل المواقع');
-    const [isLocationSelectorOpen, setIsLocationSelectorOpen] = useState(false); // ✅ Modal state
-
+  // Get shared state and functions from context
+  const { selectedLocation, openLocationModal } = useLocation();
+  // REMOVE: The local state for the modal is no longer needed
+  // const [isLocationSelectorOpen, setIsLocationSelectorOpen] = useState(false);
 
   return (
     <>
-      {/* Pass state down to Header */}
-      <Header selectedLocation={selectedLocation} setSelectedLocation={setSelectedLocation} />
-
-      {/* Hero Section */}
       <section className="w-full text-center py-20 md:py-32 bg-navy">
         <div className="container mx-auto px-4">
           <h1 className="text-4xl md:text-6xl font-bold text-gold leading-tight">
@@ -31,16 +28,16 @@ export default function Home() {
             وين هو دليلك الشامل لأفضل الخدمات والمحترفين في مجتمعك.
           </p>
 
-          {/* ✅ Show selected location */}
-            <div className="mt-6">
+          <div className="mt-6">
+            {/* UPDATE: The onClick now calls the function from the context */}
             <button
-              onClick={() => setIsLocationSelectorOpen(true)} // ✅ Open modal
+              onClick={openLocationModal}
               className="px-4 py-2 bg-gold/10 text-gold font-semibold rounded-full hover:bg-gold/20 transition"
             >
               الموقع الحالي: {selectedLocation}
             </button>
           </div>
-          {/* Search Form (kept as is) */}
+          
           <div className="mt-8 max-w-2xl mx-auto">
             <form className="relative">
               <input
@@ -60,16 +57,9 @@ export default function Home() {
         </div>
       </section>
 
-      <CategoryGrid /> 
-            {/* ✅ Location Selector Modal */}
-      <LocationSelector
-        isOpen={isLocationSelectorOpen}
-        onClose={() => setIsLocationSelectorOpen(false)}
-        onSelect={(location) => {
-          setSelectedLocation(location);
-          setIsLocationSelectorOpen(false);
-        }}
-      />
+      <CategoryGrid />
+      
+      {/* REMOVE: The LocationSelector is no longer rendered here */}
     </>
   );
 }

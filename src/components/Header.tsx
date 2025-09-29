@@ -1,36 +1,26 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import {
-  Search,
-  Menu,
-  UserCircle,
-  PlusCircle,
-  X,
-  LayoutGrid,
-  MapPin,
-} from 'lucide-react';
+import { Search, Menu, UserCircle, PlusCircle, X, LayoutGrid, MapPin } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import LocationSelector from '@/components/LocationSelector';
+// REMOVE: No need to import LocationSelector here anymore
+import { useLocation } from '@/context/LocationContext';
 
-type HeaderProps = {
-  selectedLocation: string;
-  setSelectedLocation: (loc: string) => void;
-};
-
-export default function Header({
-  selectedLocation,
-  setSelectedLocation,
-}: HeaderProps) {
+export default function Header() {
+  // Get shared state and functions from context
+  const { selectedLocation, openLocationModal } = useLocation();
+  
+  // REMOVE: The local state for the modal is no longer needed
+  // const [isLocationOpen, setIsLocationOpen] = useState(false);
+  
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isLocationOpen, setIsLocationOpen] = useState(false);
   const pathname = usePathname();
 
-  // Prevent background scrolling when a modal is open
   useEffect(() => {
+    // The useEffect can be simplified now
     const bodyStyle = document.body.style;
-    if (isMenuOpen || isLocationOpen) {
+    if (isMenuOpen) {
       bodyStyle.overflow = 'hidden';
     } else {
       bodyStyle.overflow = 'auto';
@@ -38,20 +28,18 @@ export default function Header({
     return () => {
       bodyStyle.overflow = 'auto';
     };
-  }, [isMenuOpen, isLocationOpen]);
+  }, [isMenuOpen]);
 
-  // Only show "الرئيسية" if not already on home
   const navLinks = [
     ...(pathname !== '/' ? [{ href: '/', text: 'الرئيسية' }] : []),
-  { href: '/categories', text: 'الفئات', icon: LayoutGrid },
+    { href: '/categories', text: 'الفئات', icon: LayoutGrid },
   ];
 
   return (
     <>
-      {/* Main Header */}
       <header className="sticky top-0 z-50 bg-navy/70 backdrop-blur-xl border-b border-gold/20">
         <nav className="container mx-auto flex items-center justify-between p-4 h-20 text-gray">
-          {/* Left Section */}
+          {/* ... (Left Section remains the same) ... */}
           <div className="flex items-center gap-8">
             <Link href="/" className="text-3xl font-bold text-gold hover:text-yellow-400 transition">
               <span className="font-dancing text-4xl">Wen</span>
@@ -74,10 +62,10 @@ export default function Header({
             </div>
           </div>
 
-          {/* Center Section: Location + Search (Desktop) */}
           <div className="hidden md:flex flex-1 justify-center px-8 items-center gap-4">
+            {/* UPDATE: The onClick now calls the function from the context */}
             <button
-              onClick={() => setIsLocationOpen(true)}
+              onClick={openLocationModal}
               className="flex items-center gap-2 bg-[#1B2A41]/80 rounded-full py-2.5 px-5 hover:bg-gold/10 transition-colors flex-shrink-0"
             >
               <MapPin size={20} className="text-gold" />
@@ -85,8 +73,8 @@ export default function Header({
                 {selectedLocation}
               </span>
             </button>
-
-            <div className="relative w-full max-w-md group">
+            {/* ... (Search bar remains the same) ... */}
+             <div className="relative w-full max-w-md group">
               <input
                 type="text"
                 placeholder="ابحث عن أي خدمة..."
@@ -98,8 +86,8 @@ export default function Header({
             </div>
           </div>
 
-          {/* Right Section */}
-          <div className="hidden md:flex items-center gap-4">
+          {/* ... (Right Section remains the same) ... */}
+           <div className="hidden md:flex items-center gap-4">
             <Link
               href="/register"
               className="flex items-center gap-2 text-gray hover:text-gold transition-colors font-semibold"
@@ -117,10 +105,10 @@ export default function Header({
             </Link>
           </div>
 
-          {/* Mobile Buttons */}
           <div className="flex items-center gap-2 md:hidden">
+            {/* UPDATE: This mobile button also calls the function from the context */}
             <button
-              onClick={() => setIsLocationOpen(true)}
+              onClick={openLocationModal}
               className="text-gray hover:text-gold transition-colors p-2"
             >
               <MapPin size={28} />
@@ -135,8 +123,8 @@ export default function Header({
         </nav>
       </header>
 
-      {/* Mobile Slide-out Menu */}
-      <div
+      {/* ... (Mobile Slide-out Menu remains the same) ... */}
+       <div
         className={`fixed inset-0 z-[60] bg-navy/90 backdrop-blur-2xl transition-transform duration-500 ease-in-out md:hidden ${
           isMenuOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
@@ -200,13 +188,8 @@ export default function Header({
           </div>
         </div>
       </div>
-
-      {/* Location Selector Modal */}
-      <LocationSelector
-        isOpen={isLocationOpen}
-        onClose={() => setIsLocationOpen(false)}
-        onSelect={setSelectedLocation}
-      />
+      
+      {/* REMOVE: The LocationSelector is no longer rendered here */}
     </>
   );
 }

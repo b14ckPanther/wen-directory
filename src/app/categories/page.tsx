@@ -1,19 +1,11 @@
 'use client';
 
-import Header from '@/components/Header';
 import CategoryGrid from '@/components/CategoryGrid';
-import { useState } from 'react';
 
 export default function CategoriesPage() {
-  const [selectedLocation, setSelectedLocation] = useState('اختر موقعك');
 
   return (
     <main className="bg-navy min-h-screen flex flex-col">
-      {/* Header */}
-      <Header
-        selectedLocation={selectedLocation}
-        setSelectedLocation={setSelectedLocation}
-      />
 
       {/* Hero Section */}
       <section className="bg-gradient-to-r from-[#0B132B] via-[#1B2A41] to-[#0B132B] py-16 text-center">
