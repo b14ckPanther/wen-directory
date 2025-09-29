@@ -4,21 +4,14 @@ import React, { useState, useEffect } from 'react';
 import { Search, Menu, UserCircle, PlusCircle, X, LayoutGrid, MapPin } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-// REMOVE: No need to import LocationSelector here anymore
 import { useLocation } from '@/context/LocationContext';
 
 export default function Header() {
-  // Get shared state and functions from context
   const { selectedLocation, openLocationModal } = useLocation();
-  
-  // REMOVE: The local state for the modal is no longer needed
-  // const [isLocationOpen, setIsLocationOpen] = useState(false);
-  
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const pathname = usePathname();
 
   useEffect(() => {
-    // The useEffect can be simplified now
     const bodyStyle = document.body.style;
     if (isMenuOpen) {
       bodyStyle.overflow = 'hidden';
@@ -35,13 +28,16 @@ export default function Header() {
     { href: '/categories', text: 'الفئات', icon: LayoutGrid },
   ];
 
+  // Function to handle closing the menu
+  const handleMenuClose = () => setIsMenuOpen(false);
+
   return (
     <>
       <header className="sticky top-0 z-50 bg-navy/70 backdrop-blur-xl border-b border-gold/20">
         <nav className="container mx-auto flex items-center justify-between p-4 h-20 text-gray">
-          {/* ... (Left Section remains the same) ... */}
+          {/* Left Section */}
           <div className="flex items-center gap-8">
-            <Link href="/" className="text-3xl font-bold text-gold hover:text-yellow-400 transition">
+            <Link href="/" onClick={handleMenuClose} className="text-3xl font-bold text-gold hover:text-yellow-400 transition">
               <span className="font-dancing text-4xl">Wen</span>
             </Link>
 
@@ -62,8 +58,8 @@ export default function Header() {
             </div>
           </div>
 
+          {/* Center Section */}
           <div className="hidden md:flex flex-1 justify-center px-8 items-center gap-4">
-            {/* UPDATE: The onClick now calls the function from the context */}
             <button
               onClick={openLocationModal}
               className="flex items-center gap-2 bg-[#1B2A41]/80 rounded-full py-2.5 px-5 hover:bg-gold/10 transition-colors flex-shrink-0"
@@ -73,7 +69,6 @@ export default function Header() {
                 {selectedLocation}
               </span>
             </button>
-            {/* ... (Search bar remains the same) ... */}
              <div className="relative w-full max-w-md group">
               <input
                 type="text"
@@ -86,7 +81,7 @@ export default function Header() {
             </div>
           </div>
 
-          {/* ... (Right Section remains the same) ... */}
+          {/* Right Section */}
            <div className="hidden md:flex items-center gap-4">
             <Link
               href="/register"
@@ -105,8 +100,8 @@ export default function Header() {
             </Link>
           </div>
 
+          {/* Mobile Buttons */}
           <div className="flex items-center gap-2 md:hidden">
-            {/* UPDATE: This mobile button also calls the function from the context */}
             <button
               onClick={openLocationModal}
               className="text-gray hover:text-gold transition-colors p-2"
@@ -123,7 +118,7 @@ export default function Header() {
         </nav>
       </header>
 
-      {/* ... (Mobile Slide-out Menu remains the same) ... */}
+      {/* Mobile Slide-out Menu */}
        <div
         className={`fixed inset-0 z-[60] bg-navy/90 backdrop-blur-2xl transition-transform duration-500 ease-in-out md:hidden ${
           isMenuOpen ? 'translate-x-0' : 'translate-x-full'
@@ -131,11 +126,11 @@ export default function Header() {
       >
         <div className="container mx-auto p-4 flex flex-col h-full">
           <div className="flex items-center justify-between mb-10">
-            <Link href="/" className="text-2xl font-bold text-gold hover:text-yellow-400 transition">
+            <Link href="/" onClick={handleMenuClose} className="text-2xl font-bold text-gold hover:text-yellow-400 transition">
               <span className="font-dancing text-3xl">Wen</span>
             </Link>
             <button
-              onClick={() => setIsMenuOpen(false)}
+              onClick={handleMenuClose}
               className="text-gray hover:text-gold transition-colors p-2"
             >
               <X size={32} />
@@ -143,6 +138,7 @@ export default function Header() {
           </div>
 
           <div className="flex flex-col items-center justify-center flex-grow gap-6 text-xl font-semibold">
+            {/* Search Bar */}
             <div className="relative w-full max-w-sm mb-4">
               <input
                 type="text"
@@ -154,12 +150,14 @@ export default function Header() {
               </div>
             </div>
 
+            {/* Navigation Links with onClick handler */}
             {navLinks.map((link) => {
               const Icon = link.icon;
               return (
                 <Link
                   key={link.text}
                   href={link.href}
+                  onClick={handleMenuClose} // FIX: Added onClick to close menu
                   className="w-full text-center p-4 rounded-lg flex items-center justify-center gap-3 text-gray hover:text-navy hover:bg-gold transition-all"
                 >
                   {Icon && <Icon size={24} />}
@@ -170,6 +168,7 @@ export default function Header() {
 
             <Link
               href="/register"
+              onClick={handleMenuClose} // FIX: Added onClick to close menu
               className="flex items-center gap-2 text-gray hover:text-gold transition-colors font-semibold"
             >
               <PlusCircle size={20} />
@@ -180,6 +179,7 @@ export default function Header() {
           <div className="py-6">
             <Link
               href="/login"
+              onClick={handleMenuClose} // FIX: Added onClick to close menu
               className="w-full p-4 rounded-lg flex items-center justify-center gap-3 text-lg font-semibold text-gold border-2 border-gold hover:bg-gold hover:text-navy transition-all"
             >
               <UserCircle size={24} />
@@ -188,8 +188,6 @@ export default function Header() {
           </div>
         </div>
       </div>
-      
-      {/* REMOVE: The LocationSelector is no longer rendered here */}
     </>
   );
 }
