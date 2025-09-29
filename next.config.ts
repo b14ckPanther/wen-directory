@@ -1,30 +1,28 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  reactStrictMode: true,
   images: {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'via.placeholder.com',
+        hostname: 'img.freepik.com',
+        port: '',
+        pathname: '/**',
       },
       {
         protocol: 'https',
-        hostname: 'unsplash.com',
+        hostname: 'images.unsplash.com',
+        port: '',
+        pathname: '/**',
       },
-      // --- Add this new object for Timeout ---
       {
         protocol: 'https',
-        hostname: 'media.timeout.com',
-      },
-         {
-        protocol: 'https',
-        hostname: '**.unsplash.com',
-      },
-       {
-        protocol: 'http',
-        hostname: 'googleusercontent.com',
+        hostname: 'cdn.iconscout.com',
+        port: '',
+        pathname: '/**',
       },
     ],
   },
 };
 
-export default nextConfig;
+module.exports = nextConfig;

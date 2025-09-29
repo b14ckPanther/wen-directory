@@ -15,9 +15,9 @@ export default function CategoriesPage() {
         </p>
       </section>
 
-      {/* Categories Grid */}
+      {/* Renders all categories, expanded by default */}
       <div className="flex-1">
-        <CategoryGrid />
+        <CategoryGrid startExpanded={true} />
       </div>
 
     </main>

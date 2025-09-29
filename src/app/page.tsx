@@ -1,8 +1,7 @@
 'use client';
 
-import React from 'react'; // Removed useState as it's no longer needed for the modal
+import React from 'react';
 import CategoryGrid from '@/components/CategoryGrid';
-// REMOVE: No need to import LocationSelector here anymore
 import { useLocation } from '@/context/LocationContext';
 
 const SearchIcon = () => (
@@ -12,10 +11,7 @@ const SearchIcon = () => (
 );
 
 export default function Home() {
-  // Get shared state and functions from context
   const { selectedLocation, openLocationModal } = useLocation();
-  // REMOVE: The local state for the modal is no longer needed
-  // const [isLocationSelectorOpen, setIsLocationSelectorOpen] = useState(false);
 
   return (
     <>
@@ -29,7 +25,6 @@ export default function Home() {
           </p>
 
           <div className="mt-6">
-            {/* UPDATE: The onClick now calls the function from the context */}
             <button
               onClick={openLocationModal}
               className="px-4 py-2 bg-gold/10 text-gold font-semibold rounded-full hover:bg-gold/20 transition"
@@ -57,9 +52,9 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Renders all categories, folded by default */}
       <CategoryGrid />
       
-      {/* REMOVE: The LocationSelector is no longer rendered here */}
     </>
   );
 }
