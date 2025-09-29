@@ -23,25 +23,25 @@ const fadeInUp: Variants = {
   },
 };
 
-// Data for the timeline section
+// Data for the timeline section - باللهجة العامية
 const timelineEvents = [
   {
     icon: Rocket,
     year: '2024',
     title: 'ولادة الفكرة',
-    description: 'انطلقت "Wen" من فكرة بسيطة: كيف يمكننا تسهيل العثور على أفضل الخدمات المحلية الموثوقة في مجتمعنا؟',
+    description: "'Wen' بلشت من فكرة بسيطة: كيف ممكن نخلّي الناس تلاقي أحسن الخدمات والمحلات الموثوقة اللي حواليهم بسهولة؟",
   },
   {
     icon: Users,
     year: '2025',
-    title: 'بناء المنصة',
-    description: 'قام فريقنا بتصميم وتطوير منصة سهلة الاستخدام تخدم كلاً من المستخدمين وأصحاب الأعمال.',
+    title: 'بنينا المنصة',
+    description: 'فريقنا صمم وطوّر منصة سهلة، بتخدم الناس اللي بتدوّر على خدمة، وأصحاب المصالح بنفس الوقت.',
   },
   {
     icon: HeartHandshake,
     year: 'اليوم',
-    title: 'إلى خدمتكم',
-    description: 'نحن هنا لربطك بأفضل ما يقدمه مجتمعك، ملتزمون بالجودة، الثقة، والنمو المتبادل.',
+    title: 'احنا بخدمتكم',
+    description: 'احنا هون عشان نوصلّك بأحسن الموجود بمنطقتك. بهمنا دايمًا الجودة، الثقة، وإنه الكل يستفيد وينمو معنا.',
   },
 ];
 
@@ -57,10 +57,10 @@ export default function AboutPage() {
         {/* Hero Section */}
         <motion.section variants={fadeInUp} className="text-center mb-20">
           <h1 className="text-4xl md:text-6xl font-bold text-gold mb-4">
-            قصتنا في <span className="font-dancing">Wen</span>
+            قصتنا بـ <span className="font-dancing">Wen</span>
           </h1>
           <p className="max-w-3xl mx-auto text-gray/80 text-lg">
-            نحن نؤمن بقوة المجتمع المحلي. وُجدت Wen لتكون الجسر الذي يربط بينك وبين أفضل الخدمات والمحترفين من حولك، بكل سهولة وثقة.
+            احنا بنآمن بقوة أهل البلد والمجتمع اللي حوالينا. Wen انوجد عشان يكون حلقة الوصل بينك وبين أحسن الخدمات والناس الشاطرة بمنطقتك، بكل سهولة وثقة.
           </p>
         </motion.section>
 
@@ -80,7 +80,7 @@ export default function AboutPage() {
             <Target className="w-12 h-12 text-gold mb-4" />
             <h2 className="text-2xl font-bold text-gray mb-2">مهمتنا</h2>
             <p className="text-gray/70">
-              تمكين الأعمال المحلية من خلال توفير منصة تسمح لهم بالوصول إلى جمهور أوسع، وبناء سمعة قوية، وتنمية أعمالهم.
+              ندعم المصالح والشركات المحلية ونكبّرها، عن طريق منصة بتوصلهم لناس أكثر، بتساعدهم يبنوا سمعة قوية، وينمّوا البزنس تبعهم.
             </p>
           </motion.div>
           <motion.div
@@ -91,7 +91,7 @@ export default function AboutPage() {
             <Eye className="w-12 h-12 text-gold mb-4" />
             <h2 className="text-2xl font-bold text-gray mb-2">رؤيتنا</h2>
             <p className="text-gray/70">
-              أن نكون الدليل الأول والأكثر ثقة لكل شخص يبحث عن أي خدمة في مجتمعه، معززين بذلك الاقتصاد المحلي وروابط الثقة.
+              نكون الدليل الأول اللي بوثق فيه كل حدا بدور على أي خدمة بمنطقته. وبهالطريقة، احنا بنقوّي شغل البلد وبنزيد الثقة بين الناس.
             </p>
           </motion.div>
         </motion.section>
@@ -104,7 +104,7 @@ export default function AboutPage() {
           variants={fadeInUp}
           className="mb-20"
         >
-          <h2 className="text-center text-3xl font-bold text-gold mb-12">رحلتنا</h2>
+          <h2 className="text-center text-3xl font-bold text-gold mb-12">مشوارنا</h2>
           <div className="relative max-w-2xl mx-auto">
             {/* The vertical line */}
             <motion.div 
@@ -117,8 +117,6 @@ export default function AboutPage() {
               {timelineEvents.map((event, index) => {
                 const Icon = event.icon;
                 return (
-                  // FIX: Removed the `flex` class from this container.
-                  // Now the text block correctly respects its padding, moving it away from the icon.
                   <motion.div 
                     key={index}
                     initial={{ opacity: 0, x: -20 }}
@@ -127,11 +125,9 @@ export default function AboutPage() {
                     transition={{ duration: 0.6, delay: index * 0.3 }}
                     className="relative"
                   >
-             {/* This is the corrected line */}
-<div className="absolute right-7 top-1 translate-x-1/2 w-8 h-8 bg-navy border-2 border-gold rounded-full flex items-center justify-center z-10">
-  <Icon className="w-4 h-4 text-gold" />
-</div>
-                    {/* FIX: Removed `flex-1` and ensured padding is sufficient */}
+                    <div className="absolute right-7 top-1 translate-x-1/2 w-8 h-8 bg-navy border-2 border-gold rounded-full flex items-center justify-center z-10">
+                      <Icon className="w-4 h-4 text-gold" />
+                    </div>
                     <div className="pr-12">
                       <p className="text-sm text-gold/80 mb-1">{event.year}</p>
                       <h3 className="text-xl font-bold text-gray mb-2">{event.title}</h3>
@@ -152,24 +148,23 @@ export default function AboutPage() {
           variants={fadeInUp}
           className="bg-gradient-to-r from-gold/10 to-transparent p-8 rounded-2xl border border-gold/20 text-center"
         >
-          <h2 className="text-2xl font-bold text-gold mb-4">هل أنت جاهز لتكون جزءاً من قصتنا؟</h2>
+          <h2 className="text-2xl font-bold text-gold mb-4">جاهز تكون جزء من قصتنا؟</h2>
           <p className="text-gray/80 mb-6">
-            انضم إلى شبكتنا من المحترفين أو ابدأ رحلتك في اكتشاف أفضل الخدمات الآن.
+            انضم لشبكة المحترفين اللي معنا، أو بلّش مشوارك هسا واكتشف أحسن الخدمات.
           </p>
-          {/* RESPONSIVENESS FIX: Buttons now stack on small screens and go side-by-side on larger screens */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
               href="/register"
               className="bg-gradient-to-br from-gold to-yellow-500 text-navy font-bold py-2.5 px-6 rounded-full hover:opacity-90 transition-all flex items-center gap-2 shadow-lg shadow-gold/20 transform hover:scale-105 w-full sm:w-auto"
             >
               <Briefcase size={20} />
-              انضم كصاحب عمل
+              انضم كصاحب مصلحة
             </Link>
             <Link
               href="/categories"
               className="bg-navy border-2 border-gold/50 text-gold font-bold py-2.5 px-6 rounded-full hover:bg-gold/10 transition-all flex items-center gap-2 transform hover:scale-105 w-full sm:w-auto"
             >
-              استكشف الفئات
+              شوف الفئات
             </Link>
           </div>
         </motion.section>
