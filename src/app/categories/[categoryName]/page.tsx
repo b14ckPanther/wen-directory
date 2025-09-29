@@ -9,9 +9,9 @@ import BusinessDetailModal from '@/components/BusinessDetailModal';
 import { Map } from 'lucide-react';
 import { Business, Restaurant, Clinic } from '@/types'; // Import shared types
 
-// Mock data using the imported types
-const mockBusinesses: { restaurants: Restaurant[]; clinics: Clinic[] } = {
-  restaurants: [
+// FIX: Updated keys to use Arabic slugs to match the incoming URL params
+const mockBusinesses: { [key: string]: Business[] } = {
+  'مطاعم': [
     {
       id: 1,
       name: 'مطعم القدس',
@@ -22,6 +22,8 @@ const mockBusinesses: { restaurants: Restaurant[]; clinics: Clinic[] } = {
       distance: '2.1km',
       phone: '+972501234567',
       isOpen: true,
+      cuisine: 'شرقي',
+      priceRange: '$$',
       menu: [
         { id: 101, name: 'مشاوي مشكلة', description: 'كباب، شيش طاووق، وريش', price: '95.00', image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1' },
         { id: 102, name: 'حمص باللحمة', description: 'حمص طازج مع قطع لحم غنم', price: '40.00', image: 'https://images.unsplash.com/photo-1598214886806-2c88b8509d17' },
@@ -37,18 +39,31 @@ const mockBusinesses: { restaurants: Restaurant[]; clinics: Clinic[] } = {
       distance: '1.5km',
       phone: '+972501234568',
       isOpen: false,
+      cuisine: 'إيطالي',
+      priceRange: '$$$',
       menu: [
         { id: 201, name: 'بيتزا مارجريتا', description: 'صلصة طماطم، جبنة موزاريلا، وريحان', price: '45.00', image: 'https://images.unsplash.com/photo-1594007654729-407eedc4be65' },
         { id: 202, name: 'برجر كلاسيك', description: 'لحم بقري، خس، طماطم، وبصل', price: '55.00', image: 'https://images.unsplash.com/photo-1571091718767-18b5b1457add' },
       ]
     },
   ],
-  clinics: [],
+  'عيادات': [
+    {
+      id: 4,
+      name: 'عيادة النور',
+      image: 'https://images.unsplash.com/photo-1629424647321-278c1b353f4e?q=80&w=1740&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+      rating: 4.9,
+      distance: '5.1km',
+      specialty: 'أسنان',
+      isOpen: true,
+    },
+  ],
 };
 
 export default function CategoryResultsPage() {
   const params = useParams();
-  const categoryName = params.categoryName as keyof typeof mockBusinesses;
+  // The categoryName from the URL will be in Arabic, e.g., "مطاعم"
+  const categoryName = decodeURIComponent(params.categoryName as string);
   const businesses: Business[] = mockBusinesses[categoryName] || [];
   
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
@@ -68,7 +83,7 @@ export default function CategoryResultsPage() {
       <div className="bg-navy min-h-screen">
         <section className="bg-gradient-to-r from-[#0B132B] via-[#1B2A41] to-[#0B132B] py-12 text-center">
           <h1 className="text-4xl md:text-5xl font-bold text-gold capitalize">
-            {decodeURIComponent(categoryName as string)}
+            {categoryName}
           </h1>
           <p className="text-gray mt-4 text-lg md:text-xl">
             تصفح أفضل الخيارات المتاحة في منطقتك
