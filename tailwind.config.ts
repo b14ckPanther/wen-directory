@@ -24,37 +24,39 @@ const config: Config = {
         ruwudu: ['var(--font-ruwudu)'],
       },
       keyframes: {
-        'orb-glow': {
-          '0%, 100%': { transform: 'scale(1)', boxShadow: '0 0 20px #FFD700, 0 0 30px #FFD700' },
-          '50%': { transform: 'scale(1.05)', boxShadow: '0 0 30px #FFD700, 0 0 45px #FFD700' },
+        fadeInUp: {
+          '0%': { opacity: '0', transform: 'translateY(20px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
         },
-        'orbit-cw': {
-          '0%': { transform: 'rotate(0deg)' },
-          '100%': { transform: 'rotate(360deg)' },
+        pulse: {
+          '0%, 100%': {
+            opacity: '1',
+            transform: 'scale(1)',
+          },
+          '50%': {
+            opacity: '.5',
+            transform: 'scale(0.95)',
+          },
         },
-        'orbit-ccw': {
-          '0%': { transform: 'rotate(0deg)' },
-          '100%': { transform: 'rotate(-360deg)' },
+        'bg-pan': { // Renamed from text-gradient-pan for generic use
+          '0%': { backgroundPosition: '0% 50%' },
+          '50%': { backgroundPosition: '100% 50%' },
+          '100%': { backgroundPosition: '0% 50%' },
         },
-        'text-fade': {
-          '0%': { opacity: '0' },
-          '25%, 75%': { opacity: '1' }, // <-- This line is changed
-          '100%': { opacity: '0' },
-        },
-        'star-twinkle': {
-          '0%, 100%': { opacity: '0.2', transform: 'scale(0.5)' },
-          '50%': { opacity: '1', transform: 'scale(1.2)' },
+        'star-field': {
+          'from': { transform: 'translateY(0px)' },
+          'to': { transform: 'translateY(-2000px)' },
         },
       },
       animation: {
-        'orb-glow': 'orb-glow 4s ease-in-out infinite',
-        'orbit-cw': 'orbit-cw 20s linear infinite',
-        'orbit-ccw': 'orbit-ccw 20s linear infinite',
-        'text-fade': 'text-fade 20s ease-in-out infinite',
-        'text-fade-delay': 'text-fade 20s 10s ease-in-out infinite',
-        'spin-slow': 'spin 25s linear infinite',
-        'star-twinkle': 'star-twinkle 3s ease-in-out infinite alternate',
+        fadeInUp: 'fadeInUp 0.5s ease-out forwards',
+        pulse: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        'bg-pan': 'bg-pan 4s ease-in-out infinite', // Can be used for text and backgrounds
+        'star-field': 'star-field 60s linear infinite',
       },
+      backgroundImage: {
+        'star-field': "url('https://www.transparenttextures.com/patterns/stardust.png')",
+      }
     },
   },
   plugins: [],
