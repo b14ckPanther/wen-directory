@@ -3,21 +3,30 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { User, Lock, LogIn } from 'lucide-react';
-import { useAuth } from '@/context/AuthContext'; // Import the useAuth hook
+import { useAuth } from '@/context/AuthContext';
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const { login } = useAuth(); // Get the login function from the context
+  const { login } = useAuth();
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
 
     if (username === 'admin@wen.com' && password === 'admin') {
-      // Call the central login function
-      login({ name: 'Admin', role: 'admin' });
+      // Login as a Super Admin
+      login({ 
+          name: 'Admin', 
+          role: 'admin' 
+      });
     } else if (username === 'owner@wen.com' && password === 'owner') {
-      login({ name: 'Business Owner', role: 'owner' });
+      // Login as a Business Owner with a specific subscription for testing
+      login({ 
+          name: 'صاحب العمل', 
+          role: 'owner', 
+          subscription: 'مميز', // You can change this to 'أساسي' or 'ذهبي' to test other views
+          businessType: 'products' 
+      });
     } else {
       alert('اسم المستخدم أو كلمة المرور غير صحيحة');
     }

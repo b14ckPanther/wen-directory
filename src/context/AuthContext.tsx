@@ -3,10 +3,16 @@
 import React, { createContext, useState, useContext, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 
-// Define the shape of the user object and the context
+// --- Define the possible roles and subscription plans ---
+type UserRole = 'admin' | 'owner' | 'user';
+type SubscriptionPlan = 'أساسي' | 'مميز' | 'ذهبي' | null;
+
+// --- Updated User type to include subscription details ---
 type User = {
   name: string;
-  role: 'admin' | 'owner' | 'user';
+  role: UserRole;
+  subscription?: SubscriptionPlan; // e.g., 'أساسي', 'مميز', 'ذهبي'
+  businessType?: 'products' | 'services'; // To know what to show in their dashboard
 };
 
 type AuthContextType = {
@@ -23,10 +29,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = (userData: User) => {
     setUser(userData);
+    // Redirect users based on their role
     if (userData.role === 'admin') {
       router.push('/dashboard/admin');
+    } else if (userData.role === 'owner') {
+        router.push('/dashboard/owner');
+    } else {
+      router.push('/');
     }
-    // Add other role-based redirects here if needed
   };
 
   const logout = () => {
@@ -34,10 +44,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     router.push('/login');
   };
 
-  const value = { user, login, logout };
-
   return (
-    <AuthContext.Provider value={value}>
+    <AuthContext.Provider value={{ user, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
