@@ -19,6 +19,9 @@ export type MenuItem = {
   image: string;
 };
 
+// Define the possible statuses for a business
+export type BusinessStatus = 'مقبول' | 'قيد المراجعة' | 'مرفوض';
+
 // A base type with common properties for all businesses
 type BusinessBase = {
   id: number;
@@ -27,6 +30,11 @@ type BusinessBase = {
   rating: number;
   distance: string;
   isOpen: boolean;
+  // Add the missing properties here
+  category: string;
+  owner: string;
+  status: BusinessStatus;
+  subscription: SubscriptionPlan;
 };
 
 // Specific type for Restaurants

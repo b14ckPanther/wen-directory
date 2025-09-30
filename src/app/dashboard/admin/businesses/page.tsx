@@ -1,32 +1,14 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Edit, Trash2, PlusCircle, Search, MoreVertical } from 'lucide-react';
+import type { Business, BusinessStatus } from '@/types';
 
-// Define the exact possible values for a business status
-type BusinessStatus = 'مقبول' | 'قيد المراجعة' | 'مرفوض';
+// The mockBusinesses array is no longer needed here
 
-// Define the shape of a business object
-type MockBusiness = {
-  id: number;
-  name: string;
-  category: string;
-  owner: string;
-  status: BusinessStatus;
-  subscription: string;
-};
-
-// Apply the types to your mock data array
-const mockBusinesses: MockBusiness[] = [
-  { id: 1, name: 'مطعم القدس', category: 'مطاعم', owner: 'أحمد خليل', status: 'مقبول', subscription: 'مميز' },
-  { id: 2, name: 'صالون الملكة', category: 'جمال', owner: 'فاطمة علي', status: 'قيد المراجعة', subscription: 'أساسي' },
-  { id: 3, name: 'ورشة أبو أحمد', category: 'سيارات', owner: 'أحمد ناصر', status: 'مرفوض', subscription: 'لا يوجد' },
-  { id: 4, name: 'عيادة الأمل', category: 'صحة', owner: 'سارة إبراهيم', status: 'مقبول', subscription: 'مميز' },
-];
-
-// Type the 'status' parameter in the helper function
+// Helper function for status chip color remains the same
 const getStatusChip = (status: BusinessStatus): string => {
     switch (status) {
         case 'مقبول': return 'bg-emerald-500/10 text-emerald-400';
@@ -37,6 +19,29 @@ const getStatusChip = (status: BusinessStatus): string => {
 }
 
 export default function ManageBusinessesPage() {
+  const [businesses, setBusinesses] = useState<Business[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchBusinesses = async () => {
+      try {
+        const response = await fetch('/api/businesses');
+        const data = await response.json();
+        setBusinesses(data);
+      } catch (error) {
+        console.error("Failed to fetch businesses:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBusinesses();
+  }, []);
+
+  if (loading) {
+    return <div>Loading businesses...</div>;
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -44,7 +49,7 @@ export default function ManageBusinessesPage() {
       transition={{ duration: 0.5 }}
       className="bg-[#1B2A41] p-4 md:p-6 rounded-2xl border border-gray-800 shadow-lg"
     >
-      {/* Header and Actions - Now Responsive */}
+      {/* Header and Actions */}
       <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
         <div className="relative w-full md:w-auto">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20}/>
@@ -62,7 +67,7 @@ export default function ManageBusinessesPage() {
         </Link>
       </div>
 
-      {/* Businesses Table - Hidden on Mobile */}
+      {/* Businesses Table - Now uses the 'businesses' state */}
       <div className="overflow-x-auto hidden md:block">
         <table className="w-full text-right">
           <thead className="border-b border-gray-700">
@@ -76,7 +81,7 @@ export default function ManageBusinessesPage() {
             </tr>
           </thead>
           <tbody>
-            {mockBusinesses.map(biz => (
+            {businesses.map(biz => (
               <tr key={biz.id} className="border-b border-gray-800 hover:bg-[#0A1024]/50">
                 <td className="p-4 font-semibold text-white">{biz.name}</td>
                 <td className="p-4 text-gray-300">{biz.category}</td>
@@ -103,7 +108,7 @@ export default function ManageBusinessesPage() {
 
       {/* Business Cards - For Mobile View */}
       <div className="grid grid-cols-1 gap-4 md:hidden">
-        {mockBusinesses.map(biz => (
+        {businesses.map(biz => (
             <div key={biz.id} className="bg-[#0A1024] p-4 rounded-lg border border-gray-800 flex flex-col gap-4">
                 <div className="flex justify-between items-start">
                     <div>

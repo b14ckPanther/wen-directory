@@ -77,10 +77,12 @@ export default function Sidebar() {
     >
       {/* Top Section */}
       <div>
-        {/* W logo is static now (not a link) */}
-        <div className="w-12 h-12 bg-gold flex items-center justify-center rounded-2xl text-navy text-2xl font-bold font-dancing mb-8">
-          W
-        </div>
+        {/* W logo is now a link */}
+        <Link href="/" title="العودة للصفحة الرئيسية">
+          <div className="w-12 h-12 bg-gold flex items-center justify-center rounded-2xl text-navy text-2xl font-bold font-dancing mb-8 transition-transform hover:scale-105">
+            W
+          </div>
+        </Link>
 
         {/* Functional Nav */}
         <nav className="space-y-4">
@@ -101,3 +103,4 @@ export default function Sidebar() {
     </aside>
   );
 }
+

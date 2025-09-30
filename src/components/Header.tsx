@@ -75,9 +75,13 @@ export default function Header() {
             {user ? (
                 <>
                   <span className="font-semibold text-gray-300">أهلاً، {user.name}</span>
-                  {user.role === 'admin' && (
-                    <Link href="/dashboard/admin" className="text-sm text-gold hover:underline">لوحة التحكم</Link>
-                  )}
+                  <Link
+                    href={user.role === 'admin' ? '/dashboard/admin' : '/dashboard/owner'}
+                    className="flex items-center gap-2 text-gray hover:text-gold transition-colors font-semibold"
+                  >
+                    <LayoutDashboard size={20} />
+                    لوحة التحكم
+                  </Link>
                   <button onClick={logout} className="flex items-center gap-2 text-gray hover:text-gold transition-colors font-semibold">
                     <LogOut size={20} />
                     تسجيل الخروج
@@ -118,9 +122,9 @@ export default function Header() {
                 <Bot size={24} />
                 متحير؟ اسألني
             </button>
-            {user && user.role === 'admin' && (
+            {user && (
                 <Link
-                  href="/dashboard/admin"
+                  href={user.role === 'admin' ? '/dashboard/admin' : '/dashboard/owner'}
                   onClick={handleMenuClose}
                   className="w-full text-center p-4 rounded-lg flex items-center justify-center gap-3 text-gold bg-gold/10 transition-all"
                 >
@@ -159,3 +163,4 @@ export default function Header() {
     </>
   );
 }
+

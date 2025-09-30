@@ -58,10 +58,12 @@ export default function Sidebar() {
     >
       {/* Top Section */}
       <nav className="flex flex-col items-center gap-8">
-        {/* Logo (static, not a link anymore) */}
-        <div className="w-12 h-12 bg-gold flex items-center justify-center rounded-2xl text-navy text-2xl font-bold font-dancing">
-          W
-        </div>
+        {/* Logo (now a link) */}
+        <Link href="/" title="العودة للصفحة الرئيسية">
+          <div className="w-12 h-12 bg-gold flex items-center justify-center rounded-2xl text-navy text-2xl font-bold font-dancing transition-transform hover:scale-105">
+            W
+          </div>
+        </Link>
 
         {/* Functional nav items */}
         <div className="space-y-4">
@@ -82,3 +84,4 @@ export default function Sidebar() {
     </aside>
   );
 }
+

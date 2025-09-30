@@ -1,74 +1,57 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import BusinessCard from '@/components/BusinessCard';
 import FilterChips from '@/components/FilterChips';
 import FilterModal from '@/components/FilterModal';
 import BusinessDetailModal from '@/components/BusinessDetailModal';
 import { Map } from 'lucide-react';
-import { Business, Restaurant, Clinic } from '@/types'; // Import shared types
+import { Business } from '@/types';
 
-// FIX: Updated keys to use Arabic slugs to match the incoming URL params
-const mockBusinesses: { [key: string]: Business[] } = {
-  'مطاعم': [
-    {
-      id: 1,
-      name: 'مطعم القدس',
-      description: 'أشهى المأكولات الشرقية التقليدية بأجواء أصيلة.',
-      image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?q=80&w=1548&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-      logo: 'https://img.freepik.com/premium-vector/restaurant-logo-design-template_79169-56.jpg',
-      rating: 4.5,
-      distance: '2.1km',
-      phone: '+972501234567',
-      isOpen: true,
-      cuisine: 'شرقي',
-      priceRange: '$$',
-      menu: [
-        { id: 101, name: 'مشاوي مشكلة', description: 'كباب، شيش طاووق، وريش', price: '95.00', image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1' },
-        { id: 102, name: 'حمص باللحمة', description: 'حمص طازج مع قطع لحم غنم', price: '40.00', image: 'https://images.unsplash.com/photo-1598214886806-2c88b8509d17' },
-      ],
-    },
-    {
-      id: 2,
-      name: 'بيتزا هت',
-      description: 'البيتزا العالمية الشهيرة، مباشرة إلى باب بيتك.',
-      image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?q=80&w=1740&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-      logo: 'https://cdn.iconscout.com/icon/free/png-256/free-pizza-hut-1-282297.png',
-      rating: 4.2,
-      distance: '1.5km',
-      phone: '+972501234568',
-      isOpen: false,
-      cuisine: 'إيطالي',
-      priceRange: '$$$',
-      menu: [
-        { id: 201, name: 'بيتزا مارجريتا', description: 'صلصة طماطم، جبنة موزاريلا، وريحان', price: '45.00', image: 'https://images.unsplash.com/photo-1594007654729-407eedc4be65' },
-        { id: 202, name: 'برجر كلاسيك', description: 'لحم بقري، خس، طماطم، وبصل', price: '55.00', image: 'https://images.unsplash.com/photo-1571091718767-18b5b1457add' },
-      ]
-    },
-  ],
-  'عيادات': [
-    {
-      id: 4,
-      name: 'عيادة النور',
-      image: 'https://images.unsplash.com/photo-1629424647321-278c1b353f4e?q=80&w=1740&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-      rating: 4.9,
-      distance: '5.1km',
-      specialty: 'أسنان',
-      isOpen: true,
-    },
-  ],
-};
+// The large mockBusinesses object has been removed from this file.
 
 export default function CategoryResultsPage() {
   const params = useParams();
-  // The categoryName from the URL will be in Arabic, e.g., "مطاعم"
   const categoryName = decodeURIComponent(params.categoryName as string);
-  const businesses: Business[] = mockBusinesses[categoryName] || [];
-  
+
+  // State for businesses, loading, and modals
+  const [businesses, setBusinesses] = useState<Business[]>([]);
+  const [loading, setLoading] = useState(true);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [selectedBusiness, setSelectedBusiness] = useState<Business | null>(null);
 
+  useEffect(() => {
+    const fetchAndFilterBusinesses = async () => {
+      if (!categoryName) return;
+
+      setLoading(true);
+      try {
+        const response = await fetch('/api/businesses');
+        const allBusinesses: Business[] = await response.json();
+        
+        // Filter the businesses by the category name from the URL
+        const filtered = allBusinesses.filter(biz => biz.category === categoryName);
+        
+        setBusinesses(filtered);
+      } catch (error) {
+        console.error("Failed to fetch businesses:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAndFilterBusinesses();
+  }, [categoryName]); // Re-run the effect if the categoryName changes
+
+  if (loading) {
+    return (
+      <div className="bg-navy min-h-screen text-center py-40 text-gold">
+        Loading businesses...
+      </div>
+    );
+  }
+  
   return (
     <>
       <FilterModal 

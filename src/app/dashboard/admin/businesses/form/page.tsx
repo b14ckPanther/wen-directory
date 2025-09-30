@@ -7,7 +7,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { categorySections } from '@/data/categories';
 
-// Define the types for the InputField component's props
+// InputField component remains the same
+
 type InputFieldProps = {
     label: string;
     name: string;
@@ -17,7 +18,6 @@ type InputFieldProps = {
     onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 };
 
-// Reusable input field component with types
 const InputField: React.FC<InputFieldProps> = ({ label, name, placeholder, icon: Icon, value, onChange }) => (
     <div>
         <label htmlFor={name} className="block text-sm font-medium text-gray-300 mb-2">{label}</label>
@@ -39,11 +39,11 @@ const InputField: React.FC<InputFieldProps> = ({ label, name, placeholder, icon:
     </div>
 );
 
+
 export default function BusinessFormPage() {
   const router = useRouter();
   const isEditing = false; // Placeholder
 
-  // State for all form fields
   const [formData, setFormData] = useState({
       name: '',
       owner: '',
@@ -56,28 +56,40 @@ export default function BusinessFormPage() {
 
   const [subcategories, setSubcategories] = useState<{name: string, slug: string}[]>([]);
 
-  // Handle input changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
       const { name, value } = e.target;
       setFormData(prev => ({ ...prev, [name]: value }));
   };
   
-  // Handle main category change to update subcategories
   const handleMainCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const mainCategoryTitle = e.target.value;
-    setFormData(prev => ({ ...prev, mainCategory: mainCategoryTitle, subcategory: '' })); // Reset subcategory
+    setFormData(prev => ({ ...prev, mainCategory: mainCategoryTitle, subcategory: '' }));
     
     const selectedSection = categorySections.find(section => section.title === mainCategoryTitle);
     setSubcategories(selectedSection ? selectedSection.categories : []);
   };
   
-  // Handle form submission
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
-      console.log("Form Submitted Data:", formData);
-      alert(`تم تسجيل العمل "${formData.name}" بنجاح! (تحقق من الكونسول لرؤية البيانات)`);
-      // Redirect back to the businesses list after submission
-      router.push('/dashboard/admin/businesses');
+      try {
+        const response = await fetch('/api/businesses', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(formData),
+        });
+
+        if (response.ok) {
+          alert(`تم تسجيل العمل "${formData.name}" بنجاح!`);
+          router.push('/dashboard/admin/businesses');
+        } else {
+          alert('حدث خطأ أثناء إضافة العمل.');
+        }
+      } catch (error) {
+        console.error("Failed to submit form:", error);
+        alert('حدث خطأ في الشبكة.');
+      }
   };
 
   return (
