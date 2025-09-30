@@ -1,4 +1,16 @@
-// A single, reusable type for menu items
+// --- Shared User & Auth Types ---
+export type UserRole = 'admin' | 'owner' | 'user';
+export type SubscriptionPlan = 'أساسي' | 'مميز' | 'ذهبي' | null;
+
+export type User = {
+  name: string;
+  role: UserRole;
+  subscription?: SubscriptionPlan;
+  businessType?: 'products' | 'services';
+};
+
+
+// --- Shared Business & Product Types ---
 export type MenuItem = {
   id: number;
   name: string;
@@ -24,7 +36,7 @@ export type Restaurant = BusinessBase & {
   phone: string;
   menu: MenuItem[];
   cuisine?: string;
-  priceRange?: string; // FIX: Added the missing property here
+  priceRange?: string;
 };
 
 // Specific type for Clinics

@@ -4,8 +4,9 @@ import React from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { Loader, Lock, Edit } from 'lucide-react';
-import { User } from '@/types'; // This import now works correctly
+import { User } from '@/types'; // This import will now work correctly
 
+// --- Define Types for Sub-Component Props ---
 type DynamicDashboardProps = {
     user: User | null;
 };

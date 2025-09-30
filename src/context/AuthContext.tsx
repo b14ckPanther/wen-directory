@@ -2,18 +2,7 @@
 
 import React, { createContext, useState, useContext, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-
-// --- Define the possible roles and subscription plans ---
-type UserRole = 'admin' | 'owner' | 'user';
-type SubscriptionPlan = 'أساسي' | 'مميز' | 'ذهبي' | null;
-
-// --- Updated User type to include subscription details ---
-type User = {
-  name: string;
-  role: UserRole;
-  subscription?: SubscriptionPlan; // e.g., 'أساسي', 'مميز', 'ذهبي'
-  businessType?: 'products' | 'services'; // To know what to show in their dashboard
-};
+import { User } from '@/types'; // Import the shared User type
 
 type AuthContextType = {
   user: User | null;
@@ -29,7 +18,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = (userData: User) => {
     setUser(userData);
-    // Redirect users based on their role
     if (userData.role === 'admin') {
       router.push('/dashboard/admin');
     } else if (userData.role === 'owner') {
@@ -51,7 +39,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 }
 
-// Custom hook to easily access the context
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
