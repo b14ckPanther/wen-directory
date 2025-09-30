@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Edit, Trash2, PlusCircle, Search, MoreVertical, Package, ShieldCheck } from 'lucide-react';
+import { Edit, Trash2, PlusCircle, Search } from 'lucide-react';
 import Image from 'next/image';
 
 // Mock data for products/services
@@ -19,16 +19,16 @@ export default function ManageProductsPage() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="bg-[#1B2A41] p-4 md:p-6 rounded-2xl border border-gray-800 shadow-lg"
+      className="bg-[#1B2A41] p-4 md:p-6 pr-20 rounded-2xl border border-gray-800 shadow-lg"
     >
       {/* Header and Actions */}
       <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-         <h1 className="text-2xl font-bold text-white">إدارة المنتجات والخدمات</h1>
+        <h1 className="text-2xl font-bold text-white">إدارة المنتجات والخدمات</h1>
         <div className="flex items-center gap-2 w-full md:w-auto">
           <div className="relative flex-grow">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20}/>
-            <input 
-              type="text" 
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+            <input
+              type="text"
               placeholder="ابحث عن منتج..."
               className="w-full bg-[#0A1024] border border-gray-700 rounded-full py-2 pl-12 pr-4 text-white focus:outline-none focus:ring-2 focus:ring-gold"
             />
@@ -53,22 +53,26 @@ export default function ManageProductsPage() {
             </tr>
           </thead>
           <tbody>
-            {mockProducts.map(product => (
+            {mockProducts.map((product) => (
               <tr key={product.id} className="border-b border-gray-800 hover:bg-[#0A1024]/50">
                 <td className="p-4 font-semibold text-white flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg overflow-hidden relative flex-shrink-0">
-                       <Image src={product.image} alt={product.name} fill className="object-cover"/>
-                    </div>
-                    {product.name}
+                  <div className="w-10 h-10 rounded-lg overflow-hidden relative flex-shrink-0">
+                    <Image src={product.image} alt={product.name} fill className="object-cover" />
+                  </div>
+                  {product.name}
                 </td>
                 <td className="p-4 text-gray-300">{product.price}</td>
                 <td className="p-4 text-gray-300">{product.category}</td>
                 <td className="p-4 text-gray-300">{product.stock}</td>
                 <td className="p-4 text-center">
-                    <div className="flex items-center justify-center gap-3">
-                      <button className="text-blue-400 hover:text-blue-300" title="تعديل"><Edit size={18} /></button>
-                      <button className="text-red-400 hover:text-red-300" title="حذف"><Trash2 size={18} /></button>
-                    </div>
+                  <div className="flex items-center justify-center gap-3">
+                    <button className="text-blue-400 hover:text-blue-300" title="تعديل">
+                      <Edit size={18} />
+                    </button>
+                    <button className="text-red-400 hover:text-red-300" title="حذف">
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -78,29 +82,41 @@ export default function ManageProductsPage() {
 
       {/* Product Cards (Mobile) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:hidden">
-        {mockProducts.map(product => (
-            <div key={product.id} className="bg-[#0A1024] rounded-lg border border-gray-800 flex flex-col">
-                <div className="relative h-32">
-                    <Image src={product.image} alt={product.name} fill className="object-cover rounded-t-lg"/>
-                </div>
-                <div className="p-4 flex flex-col gap-3 flex-grow">
-                    <div className="flex justify-between items-start">
-                        <div>
-                            <p className="font-bold text-white">{product.name}</p>
-                            <p className="text-sm text-gold">{product.category}</p>
-                        </div>
-                        <p className="font-bold text-lg text-emerald-400">{product.price}</p>
-                    </div>
-                    <div className="flex-grow"></div>
-                    <div className="flex justify-between items-center text-sm">
-                        <span className="text-gray-400">الكمية: {product.stock}</span>
-                        <div className="flex items-center gap-3">
-                            <button className="text-blue-400 hover:text-blue-300" title="تعديل"><Edit size={18} /></button>
-                            <button className="text-red-400 hover:text-red-300" title="حذف"><Trash2 size={18} /></button>
-                        </div>
-                    </div>
-                </div>
+        {mockProducts.map((product) => (
+          <div
+            key={product.id}
+            className="bg-[#0A1024] rounded-lg border border-gray-800 flex flex-col"
+          >
+            <div className="relative h-32">
+              <Image
+                src={product.image}
+                alt={product.name}
+                fill
+                className="object-cover rounded-t-lg"
+              />
             </div>
+            <div className="p-4 flex flex-col gap-3 flex-grow">
+              <div className="flex justify-between items-start">
+                <div>
+                  <p className="font-bold text-white">{product.name}</p>
+                  <p className="text-sm text-gold">{product.category}</p>
+                </div>
+                <p className="font-bold text-lg text-emerald-400">{product.price}</p>
+              </div>
+              <div className="flex-grow"></div>
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-gray-400">الكمية: {product.stock}</span>
+                <div className="flex items-center gap-3">
+                  <button className="text-blue-400 hover:text-blue-300" title="تعديل">
+                    <Edit size={18} />
+                  </button>
+                  <button className="text-red-400 hover:text-red-300" title="حذف">
+                    <Trash2 size={18} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         ))}
       </div>
     </motion.div>

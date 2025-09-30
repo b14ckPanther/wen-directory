@@ -10,8 +10,11 @@ export default function AdminLayout({
 }) {
   return (
     <div className="flex h-screen bg-navy text-gray-200 font-sans">
+      {/* Sidebar fixed on the right */}
       <Sidebar />
-      <div className="flex-1 flex flex-col overflow-hidden">
+
+      {/* Content shifted left with padding-right to respect sidebar width */}
+      <div className="flex-1 flex flex-col overflow-hidden pr-20">
         <Header />
         <main className="flex-1 overflow-x-hidden overflow-y-auto bg-[#0A1024] p-6">
           {children}
