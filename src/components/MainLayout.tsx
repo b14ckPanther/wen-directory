@@ -1,24 +1,38 @@
 'use client';
 
+import React from 'react';
+import { usePathname } from 'next/navigation'; // Import usePathname
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ChatWidget from '@/components/ChatWidget';
 import { LocationProvider, useLocation } from '@/context/LocationContext';
-import LocationSelector from '@/components/LocationSelector'; // 1. Import LocationSelector
+import { AuthProvider, useAuth } from '@/context/AuthContext';
+import LocationSelector from '@/components/LocationSelector';
 
-// Create a new component to access the context hook
 function LayoutContent({ children }: { children: React.ReactNode }) {
-  // 2. Get shared state from the context
   const { isLocationModalOpen, closeLocationModal, setSelectedLocation } = useLocation();
+  const { user } = useAuth();
+  const pathname = usePathname(); // Get the current URL path
+
+  // Determine if the user is currently inside the admin dashboard
+  const isAdminDashboard = user?.role === 'admin' && pathname.startsWith('/dashboard/admin');
 
   return (
     <>
-      <Header />
-      <main>{children}</main>
-      <ChatWidget />
-      <Footer />
+      {/* If the user is in the admin dashboard, render only the dashboard content */}
+      {isAdminDashboard ? (
+        children
+      ) : (
+        // Otherwise, render the standard public layout
+        <>
+          <Header />
+          <main>{children}</main>
+          <ChatWidget />
+          <Footer />
+        </>
+      )}
       
-      {/* 3. Render the single, centralized modal here */}
+      {/* The location selector is always available */}
       <LocationSelector
         isOpen={isLocationModalOpen}
         onClose={closeLocationModal}
@@ -31,9 +45,10 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   return (
-    // The provider remains here, wrapping the content
-    <LocationProvider>
-      <LayoutContent>{children}</LayoutContent>
-    </LocationProvider>
+    <AuthProvider>
+      <LocationProvider>
+        <LayoutContent>{children}</LayoutContent>
+      </LocationProvider>
+    </AuthProvider>
   );
 }

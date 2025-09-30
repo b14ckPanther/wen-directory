@@ -17,10 +17,19 @@ const config: Config = {
           dark: '#C0C0C0'
         }
       },
-      // Add the new font families here
       fontFamily: {
-        sans: ['var(--font-ruwudu)'],
+        sans: ['var(--font-noto-kufi)'],
         dancing: ['var(--font-dancing-script)'],
+      },
+      // Animations for the dashboard
+      keyframes: {
+        fadeInUp: {
+          '0%': { opacity: '0', transform: 'translateY(20px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+      },
+      animation: {
+        fadeInUp: 'fadeInUp 0.5s ease-out forwards',
       },
     },
   },
