@@ -1,88 +1,84 @@
-import { NextResponse } from 'next/server';
-import type { Business, Restaurant, Clinic } from '@/types';
+// src/app/api/businesses/route.ts
 
-// In a real application, this data would come from a database.
-const mockBusinesses: Business[] = [
-  // Using the more detailed Restaurant and Clinic types for consistency
-  {
-    id: 1,
-    name: 'مطعم القدس',
-    category: 'مطاعم',
-    owner: 'أحمد خليل',
-    status: 'مقبول',
-    subscription: 'مميز',
-    description: 'أشهى المأكولات الشرقية التقليدية بأجواء أصيلة.',
-    image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?q=80&w=1548&auto=format&fit=crop&ixlib.rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-    logo: 'https://img.freepik.com/premium-vector/restaurant-logo-design-template_79169-56.jpg',
-    rating: 4.5,
-    distance: '2.1km',
-    phone: '+972501234567',
-    isOpen: true,
-    cuisine: 'شرقي',
-    priceRange: '$$',
-    menu: [
-      { id: 101, name: 'مشاوي مشكلة', description: 'كباب، شيش طاووق، وريش', price: '95.00', image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1' },
-      { id: 102, name: 'حمص باللحمة', description: 'حمص طازج مع قطع لحم غنم', price: '40.00', image: 'https://images.unsplash.com/photo-1598214886806-2c88b8509d17' },
-    ]
-  },
-  {
-    id: 2,
-    name: 'صالون الملكة',
-    category: 'جمال',
-    owner: 'فاطمة علي',
-    status: 'قيد المراجعة',
-    subscription: 'أساسي',
-    description: 'لأنك تستحقين الأفضل.',
-    image: 'https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?q=80&w=1740&auto=format&fit=crop&ixlib.rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-    logo: '',
-    rating: 4.8,
-    distance: '3.5km',
-    phone: '+972501234569',
-    isOpen: true,
-    cuisine: 'تجميل',
-    priceRange: '$$$',
-    menu: []
-  },
-  {
-    id: 4,
-    name: 'عيادة النور',
-    category: 'صحة',
-    owner: 'سارة إبراهيم',
-    status: 'مقبول',
-    subscription: 'مميز',
-    image: 'https://images.unsplash.com/photo-1629424647321-278c1b353f4e?q=80&w=1740&auto=format&fit=crop&ixlib.rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-    rating: 4.9,
-    distance: '5.1km',
-    specialty: 'أسنان',
-    isOpen: true,
-  } as Clinic,
-];
+import { NextResponse } from 'next/server';
+import type { Business } from '@/types'; 
+// Import the initialized Supabase client
+import { supabase } from '@/lib/supabase';
 
 // Handles GET requests to /api/businesses
 export async function GET() {
-  // In the future, you would fetch from your database here.
-  // For now, we return the mock data.
-  return NextResponse.json(mockBusinesses);
+  const { data: businesses, error } = await supabase
+    .from('businesses')
+    .select('*');
+
+  if (error) {
+    console.error('Supabase GET Error:', error);
+    return NextResponse.json(
+      { message: 'Failed to fetch businesses from Supabase.', error: error.message }, 
+      { status: 500 }
+    );
+  }
+
+  return NextResponse.json(businesses as Business[]);
 }
 
-// Handles POST requests to /api/businesses
+// Handles POST requests to /api/businesses (for adding a new business)
 export async function POST(request: Request) {
   try {
     const newBusiness = await request.json();
 
-    // Simulate adding the new business to our "database"
-    // In a real DB, you'd get a new ID from the database
-    const newId = Math.max(...mockBusinesses.map(b => b.id)) + 1;
-    const businessToAdd = { ...newBusiness, id: newId, status: 'قيد المراجعة' };
-    mockBusinesses.push(businessToAdd as Business); // Add type assertion
+    // The Payload structure explicitly sets values, ensuring the DB receives
+    // data for fields that don't have a value from the front-end form.
+    const payload = {
+        name: newBusiness.name,
+        category: newBusiness.mainCategory,
+        owner: newBusiness.owner,
+        subscription: newBusiness.subscription,
+        image: newBusiness.image,
+        logo: newBusiness.logo,
+        
+        // Map subcategory to the relevant columns
+        cuisine: newBusiness.subcategory, 
+        specialty: newBusiness.subcategory,
+        
+        // Explicitly set safe defaults for fields not provided by the form
+        rating: 0, 
+        distance: '0km', 
+        is_open: true, 
+        description: '', // Text fields require a value, even if empty string
+        phone: '', 
+        menu: null, // JSONB field
+        price_range: newBusiness.subscription === 'أساسي' ? '$' : '$$$',
+    };
+    
+    if (!payload.name) {
+         return NextResponse.json({ message: 'Business name is required.' }, { status: 400 });
+    }
 
-    console.log('New business added:', businessToAdd);
+    const { data, error } = await supabase
+      .from('businesses')
+      .insert([payload])
+      .select(); 
 
-    // Return a success response
-    return NextResponse.json({ message: 'Business added successfully', business: businessToAdd }, { status: 201 });
+    if (error) {
+      console.error('Supabase POST Error:', error);
+      // Return the error message from Supabase to the frontend for debugging
+      return NextResponse.json(
+        { message: 'Error adding business to Supabase.', error: error.message }, 
+        { status: 500 }
+      );
+    }
+
+    const insertedBusiness = data[0]; 
+
+    return NextResponse.json(
+      { message: 'Business added successfully', business: insertedBusiness }, 
+      { status: 201 }
+    );
 
   } catch (error) {
-    console.error('Failed to add business:', error);
-    return NextResponse.json({ message: 'Error adding business' }, { status: 500 });
+    console.error('Request processing error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+    return NextResponse.json({ message: 'Error processing request body.', error: errorMessage }, { status: 400 });
   }
 }
