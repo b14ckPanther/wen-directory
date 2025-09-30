@@ -30,6 +30,8 @@ export default function Footer() {
               <li><Link href="/contact" className="hover:text-gold transition-colors">تواصل معنا</Link></li>
               <li><Link href="/faq" className="hover:text-gold transition-colors">الأسئلة الشائعة</Link></li>
               <li><Link href="/privacy" className="hover:text-gold transition-colors">سياسة الخصوصية</Link></li>
+              <li><Link href="/feedback" className="hover:text-gold transition-colors">شاركنا رأيك</Link></li>
+
             </ul>
           </div>
 

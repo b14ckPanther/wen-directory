@@ -5,8 +5,9 @@ import React, { useState, useEffect, useMemo } from 'react';
 import CategoryGrid from '@/components/CategoryGrid';
 import { useLocation } from '@/context/LocationContext';
 import { useChat } from '@/context/ChatContext';
-import { Bot, Search } from 'lucide-react';
+import { Bot, Search, MessageSquare } from 'lucide-react';
 import { motion, Variants } from 'framer-motion';
+import Link from 'next/link';
 
 export default function Home() {
   const { selectedLocation, openLocationModal } = useLocation();
@@ -31,7 +32,7 @@ export default function Home() {
         if (charIndex === 0) {
           isDeleting = false;
           suggestionIndex = (suggestionIndex + 1) % searchSuggestions.length;
-          timeoutId = setTimeout(type, 500); // Pause before typing new word
+          timeoutId = setTimeout(type, 500);
         } else {
           timeoutId = setTimeout(type, speed);
         }
@@ -40,7 +41,7 @@ export default function Home() {
         charIndex++;
         if (charIndex === currentSuggestion.length) {
           isDeleting = true;
-          timeoutId = setTimeout(type, 2000); // Wait before deleting
+          timeoutId = setTimeout(type, 2000);
         } else {
           timeoutId = setTimeout(type, speed);
         }
@@ -52,36 +53,20 @@ export default function Home() {
     return () => clearTimeout(timeoutId);
   }, [searchSuggestions]);
 
-
-  // Animation Variants for Framer Motion
   const containerVariants: Variants = {
     hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.3,
-      },
-    },
+    visible: { opacity: 1, transition: { staggerChildren: 0.3 } },
   };
 
   const itemVariants: Variants = {
     hidden: { y: 20, opacity: 0 },
-    visible: {
-      y: 0,
-      opacity: 1,
-      transition: {
-        duration: 0.8,
-        ease: 'easeOut',
-      },
-    },
+    visible: { y: 0, opacity: 1, transition: { duration: 0.8, ease: 'easeOut' } },
   };
 
   return (
     <>
       <section className="relative w-full text-center py-20 md:py-32 bg-navy overflow-hidden">
-        {/* Animated Starfield Background */}
         <div className="absolute inset-0 z-0 animate-star-field pointer-events-none"></div>
-
         <motion.div
           className="container relative z-10 mx-auto px-4"
           variants={containerVariants}
@@ -100,7 +85,6 @@ export default function Home() {
           >
             وين هو دليلك الكامل لأحسن الخدمات والمهنيين بمنطقتك.
           </motion.p>
-
           <motion.div className="mt-6" variants={itemVariants}>
             <button
               onClick={openLocationModal}
@@ -109,7 +93,6 @@ export default function Home() {
               موقعك الحالي: {selectedLocation}
             </button>
           </motion.div>
-
           <motion.div className="mt-8 max-w-2xl mx-auto" variants={itemVariants}>
             <form className="relative group">
               <input
@@ -125,7 +108,6 @@ export default function Home() {
                 <Search size={28} />
               </button>
             </form>
-
             <div className="mt-6 text-center md:hidden">
               <button
                 onClick={toggleChat}
@@ -140,6 +122,29 @@ export default function Home() {
       </section>
 
       <CategoryGrid />
+
+      {/* New Feedback Section */}
+      <section className="bg-gradient-to-r from-[#0B132B] via-[#1B2A41] to-[#0B132B] py-16">
+        <motion.div
+          className="container mx-auto px-4 text-center"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.5 }}
+          transition={{ duration: 0.6 }}
+        >
+          <MessageSquare className="w-12 h-12 text-gold mx-auto mb-4" />
+          <h2 className="text-3xl font-bold text-white">يهمنا رأيك!</h2>
+          <p className="text-gray/80 mt-2 max-w-xl mx-auto">
+            ساعدنا على تحسين Wen من خلال مشاركة ملاحظاتك واقتراحاتك.
+          </p>
+          <Link
+            href="/feedback"
+            className="mt-6 inline-block bg-gold text-navy font-bold py-3 px-8 rounded-full hover:bg-yellow-300 transition-all shadow-lg shadow-gold/20 transform hover:scale-105"
+          >
+            شاركنا رأيك
+          </Link>
+        </motion.div>
+      </section>
     </>
   );
 }

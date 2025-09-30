@@ -7,7 +7,7 @@ const Loader = () => {
       <div className="relative w-48 h-48 flex items-center justify-center">
         {/* Glowing Orb */}
         <div className="absolute w-24 h-24 bg-gold rounded-full animate-orb-glow flex items-center justify-center text-navy text-5xl font-dancing">
-          W
+          Wen
         </div>
 
         {/* Orbiting Text */}
