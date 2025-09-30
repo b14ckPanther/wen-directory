@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { motion, Variants } from 'framer-motion';
 import { Building2, Phone, Mail, User, Send, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
-import TiltCard from '@/components/TiltCard'; // Import the TiltCard
+import TiltCard from '@/components/TiltCard';
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -41,18 +41,13 @@ export default function RegisterPage() {
     <div className="fixed inset-0 flex items-center justify-center bg-navy p-6 overflow-hidden" style={{ minHeight: '100dvh' }}>
       <div className="absolute inset-0 z-0 animate-star-field pointer-events-none"></div>
 
-      <Link href="/" className="absolute top-6 left-6 z-20 flex items-center gap-2 text-gray/60 hover:text-gold transition-colors">
-        <ArrowLeft size={20} />
-        <span>العودة للرئيسية</span>
-      </Link>
-
       <div style={{ perspective: '1000px' }}>
         <TiltCard>
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.7, ease: 'easeOut' }}
-            className="relative w-full max-w-lg bg-[#0B132B]/50 backdrop-blur-xl rounded-2xl p-8"
+            className="relative w-full max-w-lg bg-[#0B132B]/50 backdrop-blur-xl rounded-2xl p-8 flex flex-col items-center"
           >
             {/* Animated Border */}
             <div className="absolute inset-0 rounded-2xl border-2 animate-hologram-border pointer-events-none"></div>
@@ -61,7 +56,7 @@ export default function RegisterPage() {
               variants={containerVariants}
               initial="hidden"
               animate="visible"
-              className="relative z-10"
+              className="relative z-10 w-full"
             >
               <motion.div variants={itemVariants} className="flex flex-col items-center mb-6">
                 <div className="bg-gradient-to-br from-gold to-yellow-500 p-3 rounded-full shadow-lg mb-3">
@@ -119,9 +114,18 @@ export default function RegisterPage() {
                 </p>
               </motion.div>
             </motion.div>
+
+            {/* New Back to Home Button */}
+            <motion.div variants={itemVariants} className="mt-8 pt-6 border-t border-gold/20 w-full">
+                <Link href="/" className="flex items-center justify-center gap-2 text-gray/70 hover:text-gold transition-colors w-full py-2 rounded-lg hover:bg-gold/10">
+                    <ArrowLeft size={20} />
+                    <span>العودة إلى الرئيسية</span>
+                </Link>
+            </motion.div>
           </motion.div>
         </TiltCard>
       </div>
     </div>
   );
 }
+

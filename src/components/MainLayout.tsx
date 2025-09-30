@@ -14,13 +14,13 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
   const { isLocationModalOpen, closeLocationModal, setSelectedLocation } = useLocation();
   const pathname = usePathname();
 
-  // This is the crucial logic: check if the current path is ANY dashboard page
-  const isDashboardPage = pathname.startsWith('/dashboard');
+  // Pages like login, register, and dashboards should have their own dedicated layouts.
+  const isStandalonePage = pathname.startsWith('/dashboard') || pathname === '/login' || pathname === '/register';
 
   return (
     <>
-      {/* If the user is on any dashboard page, only render the dashboard's own layout */}
-      {isDashboardPage ? (
+      {/* If the user is on any standalone page, only render that page's content */}
+      {isStandalonePage ? (
         children
       ) : (
         // For all public pages, render the standard layout
@@ -32,7 +32,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
       )}
       
       {/* The ChatModal and LocationSelector are available globally, but we hide the chat on dashboards */}
-      {!isDashboardPage && <ChatModal />}
+      {!isStandalonePage && <ChatModal />}
       <LocationSelector
         isOpen={isLocationModalOpen}
         onClose={closeLocationModal}
@@ -53,3 +53,4 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     </AuthProvider>
   );
 }
+
