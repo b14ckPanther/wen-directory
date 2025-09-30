@@ -69,18 +69,20 @@ export default function Sidebar() {
 
   return (
     <aside
-      className="fixed top-0 right-0 h-screen w-20
+      className="fixed top-0 right-0 w-20
+                 h-[100dvh]   /* ✅ Fix for iOS Safari */
                  bg-[#1B2A41] p-4 flex flex-col
                  justify-between items-center
                  border-l border-gray-800 z-50"
     >
       {/* Top Section */}
       <div>
-        <Link href="/">
-          <div className="w-12 h-12 bg-gold flex items-center justify-center rounded-2xl text-navy text-2xl font-bold font-dancing mb-8">
-            W
-          </div>
-        </Link>
+        {/* W logo is static now (not a link) */}
+        <div className="w-12 h-12 bg-gold flex items-center justify-center rounded-2xl text-navy text-2xl font-bold font-dancing mb-8">
+          W
+        </div>
+
+        {/* Functional Nav */}
         <nav className="space-y-4">
           {navItems.map((item) => (
             <NavLink key={item.label} item={item} />

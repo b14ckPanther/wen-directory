@@ -50,26 +50,26 @@ export default function Sidebar() {
 
   return (
     <aside
-      className="fixed top-0 right-0 h-screen w-20
+      className="fixed top-0 right-0 w-20
+                 h-[100dvh]   /* ✅ Dynamic height for iOS Safari */
                  bg-[#1B2A41] p-4 flex flex-col
                  justify-between items-center
                  border-l border-gray-800 z-50"
     >
       {/* Top Section */}
-<nav className="flex flex-col items-center gap-8">
-  {/* Logo (static, not a link anymore) */}
-  <div className="w-12 h-12 bg-gold flex items-center justify-center rounded-2xl text-navy text-2xl font-bold font-dancing">
-    W
-  </div>
+      <nav className="flex flex-col items-center gap-8">
+        {/* Logo (static, not a link anymore) */}
+        <div className="w-12 h-12 bg-gold flex items-center justify-center rounded-2xl text-navy text-2xl font-bold font-dancing">
+          W
+        </div>
 
-  {/* Functional nav items */}
-  <div className="space-y-4">
-    {navItems.map((item) => (
-      <NavLink key={item.label} item={item} />
-    ))}
-  </div>
-</nav>
-
+        {/* Functional nav items */}
+        <div className="space-y-4">
+          {navItems.map((item) => (
+            <NavLink key={item.label} item={item} />
+          ))}
+        </div>
+      </nav>
 
       {/* Bottom Section */}
       <div className="space-y-4">
