@@ -4,16 +4,17 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { User, Lock, CreditCard, Save } from 'lucide-react';
 
-// Define types for the reusable input component
+// --- Define Types for Reusable Components ---
 type SettingInputProps = {
     label: string;
     name: string;
     type?: string;
-    value?: string;
+    value: string; // value is required
     placeholder: string;
-    onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 };
 
+// --- Reusable Components with Types ---
 const SettingInput: React.FC<SettingInputProps> = ({ label, name, type = 'text', value, placeholder, onChange }) => (
     <div>
         <label htmlFor={name} className="block text-sm font-medium text-gray-400 mb-2">{label}</label>
@@ -21,7 +22,7 @@ const SettingInput: React.FC<SettingInputProps> = ({ label, name, type = 'text',
             type={type} 
             name={name}
             id={name}
-            defaultValue={value}
+            value={value} // Use value for controlled components
             placeholder={placeholder}
             onChange={onChange}
             className="w-full bg-[#0A1024] border border-gray-700 rounded-lg py-2 px-4 text-white focus:outline-none focus:ring-2 focus:ring-gold"
@@ -38,10 +39,12 @@ export default function OwnerSettingsPage() {
         newPassword: '',
     });
 
+    // Handler for input changes
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setSettings(prev => ({ ...prev, [e.target.name]: e.target.value }));
     };
 
+    // Handler for saving the form
     const handleSave = () => {
         console.log("Saving settings:", settings);
         alert("تم حفظ التغييرات بنجاح!");

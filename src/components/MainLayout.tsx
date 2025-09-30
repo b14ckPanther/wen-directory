@@ -12,19 +12,18 @@ import LocationSelector from '@/components/LocationSelector';
 
 function LayoutContent({ children }: { children: React.ReactNode }) {
   const { isLocationModalOpen, closeLocationModal, setSelectedLocation } = useLocation();
-  const { user } = useAuth();
   const pathname = usePathname();
 
-  // This is the crucial logic: check if the current path is part of the admin dashboard
-  const isAdminDashboard = pathname.startsWith('/dashboard/admin');
+  // This is the crucial logic: check if the current path is ANY dashboard page
+  const isDashboardPage = pathname.startsWith('/dashboard');
 
   return (
     <>
-      {/* If the user is on an admin dashboard page, only render the dashboard's own layout */}
-      {isAdminDashboard ? (
+      {/* If the user is on any dashboard page, only render the dashboard's own layout */}
+      {isDashboardPage ? (
         children
       ) : (
-        // For all other pages, render the standard public layout
+        // For all public pages, render the standard layout
         <>
           <Header />
           <main>{children}</main>
@@ -32,8 +31,8 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
         </>
       )}
       
-      {/* These components are available globally, but we can hide the chat on the dash */}
-      {!isAdminDashboard && <ChatModal />}
+      {/* The ChatModal and LocationSelector are available globally, but we hide the chat on dashboards */}
+      {!isDashboardPage && <ChatModal />}
       <LocationSelector
         isOpen={isLocationModalOpen}
         onClose={closeLocationModal}
