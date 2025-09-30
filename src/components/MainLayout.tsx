@@ -6,9 +6,10 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ChatModal from '@/components/ChatModal';
 import { LocationProvider, useLocation } from '@/context/LocationContext';
-import { AuthProvider, useAuth } from '@/context/AuthContext';
+import { AuthProvider } from '@/context/AuthContext';
 import { ChatProvider } from '@/context/ChatContext';
 import LocationSelector from '@/components/LocationSelector';
+import AddToHomeScreen from '@/components/AddToHomeScreen'; // Import the new component
 
 function LayoutContent({ children }: { children: React.ReactNode }) {
   const { isLocationModalOpen, closeLocationModal, setSelectedLocation } = useLocation();
@@ -30,7 +31,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
           <Footer />
         </>
       )}
-      
+
       {/* The ChatModal and LocationSelector are available globally, but we hide the chat on dashboards */}
       {!isStandalonePage && <ChatModal />}
       <LocationSelector
@@ -38,6 +39,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
         onClose={closeLocationModal}
         onSelect={setSelectedLocation}
       />
+      <AddToHomeScreen /> {/* Add the new component here */}
     </>
   );
 }
@@ -53,4 +55,3 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     </AuthProvider>
   );
 }
-
