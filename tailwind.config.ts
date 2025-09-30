@@ -37,8 +37,9 @@ const config: Config = {
           '100%': { transform: 'rotate(-360deg)' },
         },
         'text-fade': {
-          '0%, 100%': { opacity: '0' },
-          '50%': { opacity: '1' },
+          '0%': { opacity: '0' },
+          '25%, 75%': { opacity: '1' }, // <-- This line is changed
+          '100%': { opacity: '0' },
         },
         'star-twinkle': {
           '0%, 100%': { opacity: '0.2', transform: 'scale(0.5)' },
