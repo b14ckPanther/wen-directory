@@ -5,13 +5,23 @@ import React, { useState, useEffect, useMemo } from 'react';
 import CategoryGrid from '@/components/CategoryGrid';
 import { useLocation } from '@/context/LocationContext';
 import { useChat } from '@/context/ChatContext';
-import { Bot, Search, MessageSquare } from 'lucide-react';
+import { Bot, Search, MessageSquare, ChevronLeft } from 'lucide-react';
 import { motion, Variants } from 'framer-motion';
 import Link from 'next/link';
+import { categorySections } from '@/data/categories'; // Import all categories
 
 export default function Home() {
   const { selectedLocation, openLocationModal } = useLocation();
   const { toggleChat } = useChat();
+
+  // Carefully selected top 5 categories for the homepage
+  const popularCategories = useMemo(() => [
+    categorySections.find(s => s.slug === 'طعام'),
+    categorySections.find(s => s.slug === 'صحة'),
+    categorySections.find(s => s.slug === 'جمال'),
+    categorySections.find(s => s.slug === 'منزل-وبناء'),
+    categorySections.find(s => s.slug === 'تسوق'),
+  ].filter(Boolean), []); // .filter(Boolean) removes any undefined if a slug isn't found
 
   const [placeholder, setPlaceholder] = useState('');
   const searchSuggestions = useMemo(() => ["على شو بتدوّر؟", "مطاعم...", "أطباء...", "محامون...", "صالونات..."], []);
@@ -121,7 +131,17 @@ export default function Home() {
         </motion.div>
       </section>
 
-      <CategoryGrid />
+      {/* Pass the curated list of popular categories */}
+      <CategoryGrid sections={popularCategories} />
+
+      {/* Add a "View All" button */}
+      <div className="text-center bg-navy pb-16">
+          <Link href="/categories" className="inline-flex items-center gap-2 text-gold font-bold py-3 px-8 rounded-full border-2 border-gold/50 hover:bg-gold/10 transition-all transform hover:scale-105">
+              <span>عرض كل الفئات</span>
+              <ChevronLeft size={20} />
+          </Link>
+      </div>
+
 
       {/* New Feedback Section */}
       <section className="bg-gradient-to-r from-[#0B132B] via-[#1B2A41] to-[#0B132B] py-16">

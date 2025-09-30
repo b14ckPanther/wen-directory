@@ -6,8 +6,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown } from 'lucide-react';
-import { categorySections } from '@/data/categories';
-import TiltCard from './TiltCard'; // Import the new TiltCard component
+import { categorySections as allCategorySections } from '@/data/categories';
+import TiltCard from './TiltCard';
 
 const gridContainerVariants = {
   hidden: { opacity: 0 },
@@ -19,14 +19,25 @@ const gridItemVariants = {
   show: { opacity: 1, y: 0, transition: { duration: 0.3 } },
 };
 
+// Define the type for a single category section
+type CategorySection = typeof allCategorySections[0];
+
 type CategoryGridProps = {
   startExpanded?: boolean;
+  sections?: (CategorySection | undefined)[]; // Allow sections to be passed as an optional prop
 };
 
-export default function CategoryGrid({ startExpanded = false }: CategoryGridProps) {
+export default function CategoryGrid({ startExpanded = false, sections }: CategoryGridProps) {
+  const displaySections = sections || allCategorySections; // Use passed sections or fallback to all
+
   const [openSections, setOpenSections] = useState<{[key: string]: boolean}>(() => {
     if (startExpanded) {
-      return categorySections.reduce((acc, section) => ({...acc, [section.title]: true }), {});
+      return displaySections.reduce((acc, section) => {
+        if (section) {
+          return {...acc, [section.title]: true };
+        }
+        return acc;
+      }, {});
     }
     return {};
   });
@@ -38,7 +49,8 @@ export default function CategoryGrid({ startExpanded = false }: CategoryGridProp
   return (
     <section className="bg-navy py-12 md:py-16">
       <div className="container mx-auto px-4">
-        {categorySections.map((section) => {
+        {displaySections.map((section) => {
+          if (!section) return null; // Safely skip if a section is undefined
           const isOpen = openSections[section.title] || false;
           
           return (
