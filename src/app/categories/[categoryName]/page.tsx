@@ -1,3 +1,4 @@
+// src/app/categories/[categoryName]/page.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -8,14 +9,12 @@ import FilterModal from '@/components/FilterModal';
 import BusinessDetailModal from '@/components/BusinessDetailModal';
 import { Map } from 'lucide-react';
 import { Business } from '@/types';
-
-// The large mockBusinesses object has been removed from this file.
+import Loader from '@/components/Loader'; // Import the new Loader component
 
 export default function CategoryResultsPage() {
   const params = useParams();
   const categoryName = decodeURIComponent(params.categoryName as string);
 
-  // State for businesses, loading, and modals
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [loading, setLoading] = useState(true);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
@@ -30,7 +29,6 @@ export default function CategoryResultsPage() {
         const response = await fetch('/api/businesses');
         const allBusinesses: Business[] = await response.json();
         
-        // Filter the businesses by the category name from the URL
         const filtered = allBusinesses.filter(biz => biz.category === categoryName);
         
         setBusinesses(filtered);
@@ -42,14 +40,10 @@ export default function CategoryResultsPage() {
     };
 
     fetchAndFilterBusinesses();
-  }, [categoryName]); // Re-run the effect if the categoryName changes
+  }, [categoryName]);
 
   if (loading) {
-    return (
-      <div className="bg-navy min-h-screen text-center py-40 text-gold">
-        Loading businesses...
-      </div>
-    );
+    return <Loader />;
   }
   
   return (

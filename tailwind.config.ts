@@ -1,3 +1,4 @@
+// tailwind.config.ts
 import type { Config } from 'tailwindcss'
 
 const config: Config = {
@@ -20,16 +21,38 @@ const config: Config = {
       fontFamily: {
         sans: ['var(--font-noto-kufi)'],
         dancing: ['var(--font-dancing-script)'],
+        ruwudu: ['var(--font-ruwudu)'],
       },
-      // Animations for the dashboard
       keyframes: {
-        fadeInUp: {
-          '0%': { opacity: '0', transform: 'translateY(20px)' },
-          '100%': { opacity: '1', transform: 'translateY(0)' },
+        'orb-glow': {
+          '0%, 100%': { transform: 'scale(1)', boxShadow: '0 0 20px #FFD700, 0 0 30px #FFD700' },
+          '50%': { transform: 'scale(1.05)', boxShadow: '0 0 30px #FFD700, 0 0 45px #FFD700' },
+        },
+        'orbit-cw': {
+          '0%': { transform: 'rotate(0deg)' },
+          '100%': { transform: 'rotate(360deg)' },
+        },
+        'orbit-ccw': {
+          '0%': { transform: 'rotate(0deg)' },
+          '100%': { transform: 'rotate(-360deg)' },
+        },
+        'text-fade': {
+          '0%, 100%': { opacity: '0' },
+          '50%': { opacity: '1' },
+        },
+        'star-twinkle': {
+          '0%, 100%': { opacity: '0.2', transform: 'scale(0.5)' },
+          '50%': { opacity: '1', transform: 'scale(1.2)' },
         },
       },
       animation: {
-        fadeInUp: 'fadeInUp 0.5s ease-out forwards',
+        'orb-glow': 'orb-glow 4s ease-in-out infinite',
+        'orbit-cw': 'orbit-cw 12s linear infinite',
+        'orbit-ccw': 'orbit-ccw 12s linear infinite',
+        'text-fade': 'text-fade 12s ease-in-out infinite',
+        'text-fade-delay': 'text-fade 12s 6s ease-in-out infinite',
+        'spin-slow': 'spin 20s linear infinite',
+        'star-twinkle': 'star-twinkle 3s ease-in-out infinite alternate',
       },
     },
   },
