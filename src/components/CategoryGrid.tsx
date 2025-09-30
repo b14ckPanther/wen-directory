@@ -93,9 +93,9 @@ export default function CategoryGrid({ startExpanded = false }: CategoryGridProp
                           <motion.div key={category.name} variants={gridItemVariants}>
                             <Link
                               href={`/categories/${category.slug}`}
-                              className="bg-[#1B2A41] p-4 rounded-lg text-center text-gray flex flex-col items-center justify-center gap-3 transition-all duration-300 shadow-lg hover:shadow-gold/20 hover:bg-gold hover:text-navy transform hover:-translate-y-1.5"
+                              className="group bg-[#1B2A41] p-4 rounded-lg text-center text-gray flex flex-col items-center justify-center gap-3 transition-all duration-300 shadow-lg hover:shadow-gold/20 hover:bg-gold hover:text-navy transform hover:-translate-y-1.5"
                             >
-                              <div className="text-gold transition-colors duration-300">
+                              <div className="text-gold transition-colors duration-300 group-hover:text-navy">
                                 <IconComponent size={32} />
                               </div>
                               <span className="text-base font-semibold">{category.name}</span>
