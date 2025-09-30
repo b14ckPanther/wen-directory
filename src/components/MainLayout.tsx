@@ -1,38 +1,39 @@
 'use client';
 
 import React from 'react';
-import { usePathname } from 'next/navigation'; // Import usePathname
+import { usePathname } from 'next/navigation';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import ChatWidget from '@/components/ChatWidget';
+import ChatModal from '@/components/ChatModal';
 import { LocationProvider, useLocation } from '@/context/LocationContext';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
+import { ChatProvider } from '@/context/ChatContext';
 import LocationSelector from '@/components/LocationSelector';
 
 function LayoutContent({ children }: { children: React.ReactNode }) {
   const { isLocationModalOpen, closeLocationModal, setSelectedLocation } = useLocation();
   const { user } = useAuth();
-  const pathname = usePathname(); // Get the current URL path
+  const pathname = usePathname();
 
-  // Determine if the user is currently inside the admin dashboard
-  const isAdminDashboard = user?.role === 'admin' && pathname.startsWith('/dashboard/admin');
+  // This is the crucial logic: check if the current path is part of the admin dashboard
+  const isAdminDashboard = pathname.startsWith('/dashboard/admin');
 
   return (
     <>
-      {/* If the user is in the admin dashboard, render only the dashboard content */}
+      {/* If the user is on an admin dashboard page, only render the dashboard's own layout */}
       {isAdminDashboard ? (
         children
       ) : (
-        // Otherwise, render the standard public layout
+        // For all other pages, render the standard public layout
         <>
           <Header />
           <main>{children}</main>
-          <ChatWidget />
           <Footer />
         </>
       )}
       
-      {/* The location selector is always available */}
+      {/* These components are available globally, but we can hide the chat on the dash */}
+      {!isAdminDashboard && <ChatModal />}
       <LocationSelector
         isOpen={isLocationModalOpen}
         onClose={closeLocationModal}
@@ -42,12 +43,13 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
   );
 }
 
-
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   return (
     <AuthProvider>
       <LocationProvider>
-        <LayoutContent>{children}</LayoutContent>
+        <ChatProvider>
+          <LayoutContent>{children}</LayoutContent>
+        </ChatProvider>
       </LocationProvider>
     </AuthProvider>
   );

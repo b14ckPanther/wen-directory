@@ -1,10 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { MessageCircle, X, Send, Bot } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 
-// detect Arabic vs English for font switching
 const isArabic = (text: string) => /[\u0600-\u06FF]/.test(text);
 
 export default function ChatWidget() {
@@ -13,6 +12,10 @@ export default function ChatWidget() {
     "بدك تعرف وين تلاقي اللي براسك؟ بسيطة… اسألني وأنا بساعدك!",
   ]);
   const [input, setInput] = useState('');
+  
+  const constraintsRef = useRef(null);
+  const dragControls = useDragControls();
+  const wasDragged = useRef(false); // Ref to track dragging state
 
   const handleSend = () => {
     if (!input.trim()) return;
@@ -22,10 +25,29 @@ export default function ChatWidget() {
 
   return (
     <>
-      {/* Floating button with fast glowing pulse */}
+      <div ref={constraintsRef} className="fixed inset-0 pointer-events-none z-50" />
+      
       <AnimatePresence>
         {!isOpen && (
-          <motion.button
+          <motion.div
+            drag
+            dragConstraints={constraintsRef}
+            dragMomentum={false}
+            // Set a flag when dragging starts
+            onDragStart={() => wasDragged.current = true}
+            // Check the flag on click; only open if not dragged
+            onClick={() => {
+                if (!wasDragged.current) {
+                    setIsOpen(true);
+                }
+            }}
+            // Reset the flag after the drag gesture ends
+            onDragEnd={() => {
+                // Use a timeout to ensure this runs after the onClick event
+                setTimeout(() => {
+                    wasDragged.current = false;
+                }, 0);
+            }}
             initial={{ scale: 0 }}
             animate={{ 
               scale: [1, 1.15, 1],
@@ -41,19 +63,22 @@ export default function ChatWidget() {
               repeat: Infinity,
               ease: "easeInOut" 
             }}
-            onClick={() => setIsOpen(true)}
-            className="fixed bottom-5 right-5 bg-gradient-to-br from-gold to-yellow-500 
-                       text-navy p-4 rounded-full shadow-xl z-50"
+            className="fixed bottom-5 right-5 p-4 rounded-full shadow-xl z-[51] pointer-events-auto cursor-grab bg-gradient-to-br from-gold to-yellow-500 text-navy"
+            whileDrag={{ cursor: 'grabbing' }}
           >
             <MessageCircle size={26} />
-          </motion.button>
+          </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Chat window */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
+            drag
+            dragListener={false}
+            dragControls={dragControls}
+            dragConstraints={constraintsRef}
+            dragMomentum={false}
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 40 }}
@@ -64,21 +89,22 @@ export default function ChatWidget() {
                        bg-gradient-to-b from-[#0B132B]/95 to-[#1B2A41]/95
                        backdrop-blur-xl border border-gold/30 rounded-2xl 
                        shadow-[0_8px_30px_rgba(255,215,0,0.15)] 
-                       flex flex-col z-50"
+                       flex flex-col z-[51] pointer-events-auto"
           >
-            {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 
-                            bg-gold text-navy rounded-t-2xl shadow-md">
+            <div
+              onPointerDown={(event) => dragControls.start(event)}
+              className="flex items-center justify-between px-4 py-3 
+                            bg-gold text-navy rounded-t-2xl shadow-md cursor-grab"
+            >
               <div className="flex items-center gap-2 font-bold">
                 <Bot size={20} />
                 <span>WenBot - متحير؟ اسألني</span>
               </div>
-              <button onClick={() => setIsOpen(false)} className="hover:scale-110 transition">
+              <button onClick={() => setIsOpen(false)} className="hover:scale-110 transition pointer-events-auto">
                 <X size={20} />
               </button>
             </div>
 
-            {/* Messages */}
             <div className="flex-1 overflow-y-auto p-4 space-y-3 text-sm">
               {messages.map((msg, i) => (
                 <motion.div
@@ -90,14 +116,13 @@ export default function ChatWidget() {
                     i % 2 === 0
                       ? "bg-gold/10 text-gold self-start border border-gold/30"
                       : "bg-navy/80 text-gray self-end border border-gray/30"
-                  } ${isArabic(msg) ? "font-ruwudu" : "font-dancing"}`}
+                  } ${isArabic(msg) ? "font-sans" : "font-dancing"}`}
                 >
                   {msg}
                 </motion.div>
               ))}
             </div>
 
-            {/* Input with left send button */}
             <div className="p-3 border-t border-gold/20 flex items-center gap-2">
               <div className="relative flex-1">
                 <input

@@ -1,15 +1,17 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Search, Menu, UserCircle, PlusCircle, X, LayoutGrid, MapPin, LogOut, LayoutDashboard } from 'lucide-react';
+import { Search, Menu, UserCircle, PlusCircle, X, LayoutGrid, MapPin, LogOut, LayoutDashboard, Bot } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useLocation } from '@/context/LocationContext';
 import { useAuth } from '@/context/AuthContext';
+import { useChat } from '@/context/ChatContext';
 
 export default function Header() {
   const { selectedLocation, openLocationModal } = useLocation();
   const { user, logout } = useAuth();
+  const { toggleChat } = useChat(); // Get the toggleChat function
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const pathname = usePathname();
 
@@ -34,7 +36,7 @@ export default function Header() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 bg-navy/70 backdrop-blur-xl border-b border-gold/20">
+      <header className="sticky top-0 z-40 bg-navy/70 backdrop-blur-xl border-b border-gold/20">
         <nav className="container mx-auto flex items-center justify-between p-4 h-20 text-gray">
           {/* Left & Center Sections... */}
           <div className="flex items-center gap-8">
@@ -63,30 +65,35 @@ export default function Header() {
             </div>
           </div>
 
-          {/* Right Section (Dynamic) */}
+          {/* Right Section (Updated) */}
           <div className="hidden md:flex items-center gap-4">
+            <button onClick={toggleChat} className="flex items-center gap-2 text-gray hover:text-gold transition-colors font-semibold">
+                <Bot size={20} />
+                <span> متحير؟ اسألني</span>
+            </button>
+            <div className="h-6 w-px bg-gold/20"></div> {/* Divider */}
             {user ? (
-              <>
-                <span className="font-semibold text-gray-300">أهلاً، {user.name}</span>
-                {user.role === 'admin' && (
-                  <Link href="/dashboard/admin" className="text-sm text-gold hover:underline">لوحة التحكم</Link>
-                )}
-                <button onClick={logout} className="flex items-center gap-2 text-gray hover:text-gold transition-colors font-semibold">
-                  <LogOut size={20} />
-                  تسجيل الخروج
-                </button>
-              </>
-            ) : (
-              <>
-                <Link href="/register" className="flex items-center gap-2 text-gray hover:text-gold transition-colors font-semibold">
-                  <PlusCircle size={20} />
-                  انضم لنا
-                </Link>
-                <Link href="/login" className="bg-gradient-to-br from-gold to-yellow-500 text-navy font-bold py-2.5 px-6 rounded-full hover:opacity-90 transition-all flex items-center gap-2 shadow-lg shadow-gold/20 transform hover:scale-105">
-                  <UserCircle size={20} />
-                  تسجيل الدخول
-                </Link>
-              </>
+                <>
+                  <span className="font-semibold text-gray-300">أهلاً، {user.name}</span>
+                  {user.role === 'admin' && (
+                    <Link href="/dashboard/admin" className="text-sm text-gold hover:underline">لوحة التحكم</Link>
+                  )}
+                  <button onClick={logout} className="flex items-center gap-2 text-gray hover:text-gold transition-colors font-semibold">
+                    <LogOut size={20} />
+                    تسجيل الخروج
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link href="/register" className="flex items-center gap-2 text-gray hover:text-gold transition-colors font-semibold">
+                    <PlusCircle size={20} />
+                    انضم لنا
+                  </Link>
+                  <Link href="/login" className="bg-gradient-to-br from-gold to-yellow-500 text-navy font-bold py-2.5 px-6 rounded-full hover:opacity-90 transition-all flex items-center gap-2 shadow-lg shadow-gold/20 transform hover:scale-105">
+                    <UserCircle size={20} />
+                    تسجيل الدخول
+                  </Link>
+                </>
             )}
           </div>
           <div className="flex items-center gap-2 md:hidden">
@@ -106,8 +113,11 @@ export default function Header() {
             <button onClick={handleMenuClose} className="text-gray hover:text-gold transition-colors p-2"><X size={32} /></button>
           </div>
           <div className="flex flex-col items-center justify-center flex-grow gap-6 text-xl font-semibold">
-            
-            {/* FIX: Added dynamic dashboard link for admin */}
+            {/* AI Assistant button */}
+            <button onClick={() => { toggleChat(); handleMenuClose(); }} className="w-full text-center p-4 rounded-lg flex items-center justify-center gap-3 text-gold bg-gold/10 transition-all">
+                <Bot size={24} />
+                متحير؟ اسألني
+            </button>
             {user && user.role === 'admin' && (
                 <Link
                   href="/dashboard/admin"
@@ -118,7 +128,6 @@ export default function Header() {
                   لوحة التحكم
                 </Link>
             )}
-
             {navLinks.map((link) => (
               <Link key={link.text} href={link.href} onClick={handleMenuClose} className="w-full text-center p-4 rounded-lg flex items-center justify-center gap-3 text-gray hover:text-navy hover:bg-gold transition-all">
                 {link.icon && <link.icon size={24} />}
