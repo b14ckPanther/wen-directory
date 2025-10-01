@@ -1,14 +1,13 @@
 'use client';
-
 import React, { useState, useMemo } from 'react';
 import Image from 'next/image';
 import { AnimatePresence, motion } from 'framer-motion';
 import { 
-  X, ShoppingCart, ArrowLeft, Utensils, Info, Phone, MapPin, Share2, Instagram, Facebook, Globe, Plus, 
-  ImageIcon, // Import for fallback icon
-  Building // Import for fallback icon
-} from 'lucide-react';
+  X, ShoppingCart, ArrowLeft, Utensils, Phone, MapPin, Share2, Instagram, Facebook, Globe, Plus, 
+  ImageIcon, Building 
+} from 'lucide-react'; 
 import { Business, MenuItem, Restaurant } from '@/types';
+
 
 type BusinessDetailModalProps = {
   business: Business | null;

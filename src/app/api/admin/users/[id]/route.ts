@@ -20,8 +20,8 @@ async function checkAdmin(request: NextRequest, supabaseAdmin: SupabaseClient) {
 
 
 // --- PUT (Update) Function ---
+// ✅ FIX: Correctly type the second argument
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
-  // ✅ FIX: Get the userId at the very beginning
   const userId = params.id;
 
   const supabaseAdmin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
@@ -53,8 +53,8 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 }
 
 // --- DELETE Function ---
+// ✅ FIX: Correctly type the second argument
 export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
-  // ✅ FIX: Get the userId at the very beginning
   const userId = params.id;
 
   const supabaseAdmin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);

@@ -5,7 +5,6 @@ import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { User, Lock, LogIn, ArrowLeft, AlertCircle } from 'lucide-react'; // Import AlertCircle
 import TiltCard from '@/components/TiltCard';
 import { supabase } from '@/lib/supabase';
-import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
