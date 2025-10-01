@@ -1,3 +1,4 @@
+// src/app/dashboard/admin/users/page.tsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -7,7 +8,6 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthContext';
 import type { SubscriptionPlan } from '@/types';
 
-// Define a more detailed user type for the admin page
 type AdminUserView = {
   id: string;
   username: string;
@@ -17,14 +17,13 @@ type AdminUserView = {
   business_name: string | null;
 };
 
-// Define the Business type to match the expected data from Supabase
+// ✅ FIX: Use 'owner' (string) instead of 'owner_id'
 type Business = {
   id: number;
   name: string;
-  owner_id: string | null;
+  owner: string | null;
 };
 
-// Define the specific subscription types for the form state
 type FormSubscription = 'أساسي' | 'مميز' | 'ذهبي';
 
 // --- Add/Edit User Modal Component ---
@@ -52,7 +51,6 @@ const UserModal = ({
 
   const isEditing = !!editingUser;
 
-  // Type guard to ensure the selected value is a valid subscription type
   const isFormSubscription = (value: string): value is FormSubscription => {
     return ['أساسي', 'مميز', 'ذهبي'].includes(value);
   };
@@ -125,7 +123,8 @@ const UserModal = ({
     setIsSubmitting(false);
   };
   
-  const availableBusinesses = businesses.filter(b => !b.owner_id || b.id === editingUser?.business_id);
+  // ✅ FIX: Filter by '!b.owner' to find unassigned businesses
+  const availableBusinesses = businesses.filter(b => !b.owner || b.id === editingUser?.business_id);
 
   return (
     <AnimatePresence>
@@ -191,7 +190,6 @@ const UserModal = ({
   );
 };
 
-
 // --- Main Page Component ---
 export default function ManageUsersPage() {
     const [users, setUsers] = useState<AdminUserView[]>([]);
@@ -199,60 +197,35 @@ export default function ManageUsersPage() {
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingUser, setEditingUser] = useState<AdminUserView | null>(null);
+    const { session } = useAuth();
 
     const fetchData = async () => {
+        if (!session) { return; }
         setLoading(true);
-        const { data: profiles, error: profileError } = await supabase
-            .from('profiles')
-            .select(`
-                id,
-                username,
-                role,
-                business_id,
-                business:businesses ( name )
-            `);
-
-        const { data: authUsersData, error: authError } = await supabase.auth.admin.listUsers();
-        
-        const { data: businessData, error: businessError } = await supabase
-            .from('businesses')
-            .select('id, name, owner_id');
-
-        if (profileError || authError || businessError) {
-            console.error(profileError || authError || businessError);
-        } else if (authUsersData?.users && profiles) {
-            const combinedUsers = authUsersData.users.map(authUser => {
-                const profile = profiles.find(p => p.id === authUser.id);
-                
-                let businessName: string | null = null;
-                // Correctly handle the business type, which might be an object or an array
-                if (profile?.business) {
-                    const businessData = profile.business as { name: string } | { name: string }[];
-                    if (Array.isArray(businessData)) {
-                        businessName = businessData[0]?.name || null;
-                    } else if (businessData && typeof businessData === 'object') {
-                        businessName = businessData.name;
-                    }
-                }
-
-                return {
-                    id: authUser.id,
-                    email: authUser.email || 'N/A',
-                    username: profile?.username || 'N/A',
-                    role: profile?.role || 'N/A',
-                    business_id: profile?.business_id || null,
-                    business_name: businessName
-                };
+        try {
+            const response = await fetch('/api/admin/users', {
+                headers: { 'Authorization': `Bearer ${session.access_token}` }
             });
-            setUsers(combinedUsers);
-            setBusinesses(businessData || []);
+            if (!response.ok) {
+                const err = await response.json();
+                console.error("Error fetching data:", err);
+                throw new Error(err.message || 'Failed to fetch user data');
+            }
+            const data = await response.json();
+            setUsers(data.users || []);
+            setBusinesses(data.businesses || []);
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setLoading(false);
         }
-        setLoading(false);
     };
 
     useEffect(() => {
-        fetchData();
-    }, []);
+        if (session) {
+            fetchData();
+        }
+    }, [session]);
 
     const handleOpenAddModal = () => {
         setEditingUser(null);
@@ -330,4 +303,3 @@ export default function ManageUsersPage() {
     </>
   );
 }
-

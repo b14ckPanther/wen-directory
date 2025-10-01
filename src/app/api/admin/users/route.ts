@@ -1,3 +1,4 @@
+// src/app/api/admin/users/route.ts
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse, NextRequest } from 'next/server';
 
@@ -8,7 +9,6 @@ export async function GET(request: NextRequest) {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
 
-  // Get the token from the request headers to identify who is making the request
   const authHeader = request.headers.get('Authorization');
   const token = authHeader?.split('Bearer ')[1];
 
@@ -16,14 +16,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ message: 'Authentication token required.' }, { status: 401 });
   }
 
-  // Verify the token and get the user making the request
   const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token);
 
   if (userError || !user) {
     return NextResponse.json({ message: 'Invalid token or user not found.' }, { status: 401 });
   }
 
-  // Check if this authenticated user is an admin
   const { data: profile, error: profileError } = await supabaseAdmin
     .from('profiles')
     .select('role')
@@ -34,20 +32,21 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ message: 'Forbidden: Admins only.' }, { status: 403 });
   }
 
-  // --- If the user is a confirmed admin, proceed to fetch all data ---
+  // --- Proceed to fetch all data ---
   const { data: profilesData, error: profilesFetchError } = await supabaseAdmin
     .from('profiles')
     .select('id, username, role, business_id, business:businesses ( name )');
   
   const { data: authUsersData, error: authUsersError } = await supabaseAdmin.auth.admin.listUsers();
   
+  // ✅ FIX: Select 'owner' instead of 'owner_id'
   const { data: businessData, error: businessError } = await supabaseAdmin
     .from('businesses')
-    .select('id, name, owner_id');
+    .select('id, name, owner');
 
   if (profilesFetchError || authUsersError || businessError) {
       console.error("Error fetching data:", profilesFetchError || authUsersError || businessError);
-      return NextResponse.json({ message: 'Failed to fetch initial data.' }, { status: 500 });
+      return NextResponse.json({ message: 'Failed to fetch initial data.', error: profilesFetchError || authUsersError || businessError }, { status: 500 });
   }
   
   if (!authUsersData?.users || !profilesData) {
@@ -75,4 +74,3 @@ export async function GET(request: NextRequest) {
 
   return NextResponse.json({ users: combinedUsers, businesses: businessData || [] });
 }
-
