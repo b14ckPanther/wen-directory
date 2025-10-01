@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { motion, Variants } from 'framer-motion';
-import { Building2, Phone, Mail, User, Send, ArrowLeft } from 'lucide-react';
+import { motion, Variants, AnimatePresence } from 'framer-motion';
+import { Building2, Phone, Mail, User, Send, ArrowLeft, AlertCircle, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
 import TiltCard from '@/components/TiltCard';
 
@@ -14,16 +14,38 @@ export default function RegisterPage() {
     businessName: '',
     businessType: '',
   });
+  const [status, setStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Business registration request:', formData);
-    alert('تم إرسال طلبك! سيتم التواصل معك بعد المراجعة.');
-    setFormData({ name: '', email: '', phone: '', businessName: '', businessType: '' });
+    setLoading(true);
+    setStatus(null);
+
+    try {
+      const response = await fetch('/api/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        setStatus({ type: 'success', message: 'تم إرسال طلبك! سيتم التواصل معك بعد المراجعة.' });
+        setFormData({ name: '', email: '', phone: '', businessName: '', businessType: '' });
+      } else {
+        setStatus({ type: 'error', message: result.message || 'حدث خطأ أثناء إرسال طلبك.' });
+      }
+    } catch (error) {
+      setStatus({ type: 'error', message: 'حدث خطأ في الشبكة. يرجى المحاولة مرة أخرى.' });
+    } finally {
+      setLoading(false);
+    }
   };
   
   const containerVariants: Variants = {
@@ -69,6 +91,24 @@ export default function RegisterPage() {
               </motion.div>
 
               <motion.form onSubmit={handleSubmit} className="space-y-4" variants={itemVariants}>
+                <AnimatePresence>
+                  {status && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className={`text-sm rounded-lg p-3 flex items-center gap-2 ${
+                        status.type === 'success'
+                          ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-400'
+                          : 'bg-red-500/10 border border-red-500/30 text-red-400'
+                      }`}
+                    >
+                      {status.type === 'success' ? <CheckCircle size={18} /> : <AlertCircle size={18} />}
+                      <span>{status.message}</span>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gold/60" size={20} />
@@ -98,10 +138,11 @@ export default function RegisterPage() {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.98 }}
                   type="submit"
-                  className="w-full bg-gradient-to-br from-gold to-yellow-500 text-navy py-2.5 px-4 rounded-xl font-bold shadow-lg flex items-center justify-center gap-2 hover:shadow-gold/30 transition-shadow"
+                  disabled={loading}
+                  className="w-full bg-gradient-to-br from-gold to-yellow-500 text-navy py-2.5 px-4 rounded-xl font-bold shadow-lg flex items-center justify-center gap-2 hover:shadow-gold/30 transition-shadow disabled:opacity-70"
                 >
                   <Send size={20} />
-                  إرسال الطلب
+                  {loading ? 'جاري الإرسال...' : 'إرسال الطلب'}
                 </motion.button>
               </motion.form>
 
@@ -115,7 +156,6 @@ export default function RegisterPage() {
               </motion.div>
             </motion.div>
 
-            {/* New Back to Home Button */}
             <motion.div variants={itemVariants} className="mt-8 pt-6 border-t border-gold/20 w-full">
                 <Link href="/" className="flex items-center justify-center gap-2 text-gray/70 hover:text-gold transition-colors w-full py-2 rounded-lg hover:bg-gold/10">
                     <ArrowLeft size={20} />
@@ -128,4 +168,3 @@ export default function RegisterPage() {
     </div>
   );
 }
-

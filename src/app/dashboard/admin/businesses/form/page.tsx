@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect, Suspense, ChangeEvent } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowRight, Building, Tag, Image as DollarSign, LucideIcon, Layers, AlertCircle, CheckCircle, UploadCloud } from 'lucide-react';
+import { ArrowRight, Building, Tag, Image as ImageIcon, LucideIcon, Layers, AlertCircle, CheckCircle, UploadCloud, DollarSign, Phone } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
@@ -11,28 +11,38 @@ import Image from 'next/image';
 
 // --- Types ---
 type InputFieldProps = {
-    label: string; name: string; placeholder: string; icon: LucideIcon;
-    value: string; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    label: string; 
+    name: string; 
+    placeholder: string; 
+    icon: LucideIcon;
+    value: string; 
+    onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    required?: boolean;
 };
 type Category = { id: number; name: string; };
-type Subcategory = { id: number; name:string; category_id: number; };
+type Subcategory = { id: number; name: string; category_id: number; };
 
 // --- InputField Component ---
-const InputField: React.FC<InputFieldProps & { required?: boolean }> = ({ label, name, placeholder, icon: Icon, value, onChange, required = true }) => (
+const InputField: React.FC<InputFieldProps> = ({ label, name, placeholder, icon: Icon, value, onChange, required = true }) => (
     <div>
         <label htmlFor={name} className="block text-sm font-medium text-gray-300 mb-2">{label}</label>
         <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Icon className="text-gray-400" size={18} />
             </div>
-            <input type="text" name={name} id={name} placeholder={placeholder} value={value} onChange={onChange}
+            <input 
+                type="text" 
+                name={name} 
+                id={name} 
+                placeholder={placeholder} 
+                value={value} 
+                onChange={onChange}
                 className="w-full bg-[#0A1024] border border-gray-700 rounded-lg py-2 pl-10 pr-4 text-white focus:outline-none focus:ring-2 focus:ring-gold" 
-                required={required} // Use the prop here
+                required={required}
             />
         </div>
     </div>
 );
-
 
 // --- Main Form Component ---
 function BusinessForm() {
@@ -47,7 +57,9 @@ function BusinessForm() {
       subcategory_id: '',
       image: '',
       logo: '',
-      subscription: 'أساسي',
+      subscription: 'أساسي' as 'أساسي' | 'مميز' | 'ذهبي',
+      phone: '',
+      owner: '', // The owner's name for display purposes
   });
   
   const [coverFile, setCoverFile] = useState<File | null>(null);
@@ -87,6 +99,8 @@ function BusinessForm() {
             image: data.image || '',
             logo: data.logo || '',
             subscription: data.subscription || 'أساسي',
+            phone: data.phone || '',
+            owner: data.owner || '',
           });
           setCoverPreview(data.image);
           setLogoPreview(data.logo);
@@ -100,6 +114,8 @@ function BusinessForm() {
    useEffect(() => {
     if (formData.category_id) {
       setFilteredSubcategories(subcategories.filter(sub => sub.category_id === Number(formData.category_id)));
+    } else {
+      setFilteredSubcategories([]);
     }
   }, [formData.category_id, subcategories]);
 
@@ -107,13 +123,8 @@ function BusinessForm() {
     const file = e.target.files?.[0];
     if (file) {
       const previewUrl = URL.createObjectURL(file);
-      if (type === 'cover') {
-        setCoverFile(file);
-        setCoverPreview(previewUrl);
-      } else {
-        setLogoFile(file);
-        setLogoPreview(previewUrl);
-      }
+      if (type === 'cover') { setCoverFile(file); setCoverPreview(previewUrl); } 
+      else { setLogoFile(file); setLogoPreview(previewUrl); }
     }
   };
 
@@ -133,42 +144,33 @@ function BusinessForm() {
       setMessage(null);
 
       try {
-        let { image: coverUrl, logo: logoUrl } = formData;
+        let coverUrl = formData.image;
+        let logoUrl = formData.logo;
 
         if (coverFile) {
             const filePath = `public/${Date.now()}-${coverFile.name.replace(/\s/g, '_')}`;
             const { error: uploadError } = await supabase.storage.from('business-assets').upload(filePath, coverFile);
             if (uploadError) throw new Error(`Cover image upload failed: ${uploadError.message}`);
-            const { data: urlData } = supabase.storage.from('business-assets').getPublicUrl(filePath);
-            coverUrl = urlData.publicUrl;
+            coverUrl = supabase.storage.from('business-assets').getPublicUrl(filePath).data.publicUrl;
         }
 
         if (logoFile) {
             const filePath = `public/${Date.now()}-${logoFile.name.replace(/\s/g, '_')}`;
             const { error: uploadError } = await supabase.storage.from('business-assets').upload(filePath, logoFile);
             if (uploadError) throw new Error(`Logo upload failed: ${uploadError.message}`);
-            const { data: urlData } = supabase.storage.from('business-assets').getPublicUrl(filePath);
-            logoUrl = urlData.publicUrl;
+            logoUrl = supabase.storage.from('business-assets').getPublicUrl(filePath).data.publicUrl;
         }
         
-        const finalPayload = { ...formData, image: coverUrl, logo: logoUrl };
-        const method = isEditing ? 'PUT' : 'POST';
-        const apiPayload = isEditing ? { id: businessId, ...finalPayload } : finalPayload;
+        const payload = { ...formData, image: coverUrl, logo: logoUrl };
+        
+        const { error } = isEditing
+            ? await supabase.from('businesses').update(payload).eq('id', businessId)
+            : await supabase.from('businesses').insert(payload);
 
-        const response = await fetch('/api/businesses', {
-          method,
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(apiPayload),
-        });
+        if (error) throw error;
 
-        const result = await response.json();
-
-        if (response.ok) {
-          setMessage({ type: 'success', text: result.message });
-          setTimeout(() => router.push('/dashboard/admin/businesses'), 1500);
-        } else {
-          setMessage({ type: 'error', text: result.message || 'An unexpected error occurred.' });
-        }
+        setMessage({ type: 'success', text: `Business ${isEditing ? 'updated' : 'created'} successfully!` });
+        setTimeout(() => router.push('/dashboard/admin/businesses'), 1500);
 
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
@@ -201,9 +203,8 @@ function BusinessForm() {
                 </div>
             )}
             
-            <div>
-                 <InputField label="اسم العمل" name="name" placeholder="مثال: مطعم القدس" icon={Building} value={formData.name} onChange={handleChange} />
-            </div>
+            <InputField label="اسم العمل" name="name" placeholder="مثال: مطعم القدس" icon={Building} value={formData.name} onChange={handleChange} />
+            <InputField label="رقم هاتف العمل" name="phone" placeholder="050-123-4567" icon={Phone} value={formData.phone} onChange={handleChange} required={false} />
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
@@ -284,7 +285,6 @@ function BusinessForm() {
   );
 }
 
-// Wrap the component in Suspense
 export default function BusinessFormPage() {
     return (
         <Suspense fallback={<div>Loading form...</div>}>

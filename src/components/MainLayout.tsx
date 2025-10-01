@@ -1,21 +1,23 @@
 'use client';
 
-import React, { useEffect } from 'react'; // Import useEffect
+import React, { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ChatModal from '@/components/ChatModal';
 import { LocationProvider, useLocation } from '@/context/LocationContext';
-import { AuthProvider } from '@/context/AuthContext';
+import { AuthProvider, useAuth } from '@/context/AuthContext'; // Import useAuth
 import { ChatProvider } from '@/context/ChatContext';
 import LocationSelector from '@/components/LocationSelector';
 import AddToHomeScreen from '@/components/AddToHomeScreen';
+import Loader from '@/components/Loader'; // Import your Loader component
 
+// This new component decides what to show based on auth state
 function LayoutContent({ children }: { children: React.ReactNode }) {
   const { isLocationModalOpen, closeLocationModal, setSelectedLocation } = useLocation();
+  const { loading: authLoading } = useAuth(); // Get the loading state from AuthContext
   const pathname = usePathname();
 
-  // Add this useEffect to register the service worker
   useEffect(() => {
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker
@@ -24,6 +26,12 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
         .catch((error) => console.error('Service Worker registration failed:', error));
     }
   }, []);
+
+  // While the initial auth check is running, show a full-page loader.
+  // This is the key to preventing the blank screen.
+  if (authLoading) {
+    return <Loader />;
+  }
 
   const isStandalonePage = pathname.startsWith('/dashboard') || pathname === '/login' || pathname === '/register';
 
@@ -52,6 +60,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   return (
+    // The order of providers is important. AuthProvider should wrap Location/Chat providers.
     <AuthProvider>
       <LocationProvider>
         <ChatProvider>

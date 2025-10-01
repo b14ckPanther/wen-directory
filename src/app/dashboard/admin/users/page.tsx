@@ -1,20 +1,20 @@
 // src/app/dashboard/admin/users/page.tsx
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { UserPlus, Search, X, Building, Mail, Lock, User, Edit, Trash2, AlertCircle, CheckCircle } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 
 // --- Type Definitions ---
 type AdminUserView = { id: string; username: string; email: string; role: string; business_id: number | null; business_name: string | null;};
-type Business = { id: number; name: string; owner: string | null; };
+type Business = { id: number; name: string; };
 type FormSubscription = 'أساسي' | 'مميز' | 'ذهبي';
 
 // --- Add/Edit User Modal Component ---
-const UserModal = ({ isOpen, onClose, businesses, onUserAddedOrUpdated, editingUser }: {
+const UserModal = ({ isOpen, onClose, businesses, onUserAddedOrUpdated, editingUser, allUsers }: {
     isOpen: boolean; onClose: () => void; businesses: Business[];
-    onUserAddedOrUpdated: () => void; editingUser: AdminUserView | null;
+    onUserAddedOrUpdated: () => void; editingUser: AdminUserView | null; allUsers: AdminUserView[];
 }) => {
   const { session } = useAuth();
   const [email, setEmail] = useState('');
@@ -43,6 +43,12 @@ const UserModal = ({ isOpen, onClose, businesses, onUserAddedOrUpdated, editingU
     }
   }, [editingUser, isEditing, isOpen]);
 
+  // ✅ FIX: Correctly filter available businesses
+  const availableBusinesses = useMemo(() => {
+      const assignedBusinessIds = new Set(allUsers.map(u => u.business_id).filter(Boolean));
+      return businesses.filter(b => !assignedBusinessIds.has(b.id) || b.id === editingUser?.business_id);
+  }, [businesses, allUsers, editingUser]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!username || !businessId) { setError('Username and an assigned business are required.'); return; }
@@ -70,8 +76,6 @@ const UserModal = ({ isOpen, onClose, businesses, onUserAddedOrUpdated, editingU
     } catch (err) { setError('A network error occurred.'); } 
     finally { setIsSubmitting(false); }
   };
-  
-  const availableBusinesses = businesses.filter(b => !b.owner || b.id === editingUser?.business_id);
 
   return (
     <AnimatePresence>
@@ -199,7 +203,7 @@ export default function ManageUsersPage() {
 
   return (
     <>
-    <UserModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} businesses={businesses} onUserAddedOrUpdated={fetchData} editingUser={editingUser} />
+    <UserModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} businesses={businesses} onUserAddedOrUpdated={fetchData} editingUser={editingUser} allUsers={users} />
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
       className="bg-[#1B2A41] p-4 md:p-6 rounded-2xl border border-gray-800 shadow-lg">
       

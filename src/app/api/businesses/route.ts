@@ -38,24 +38,41 @@ export async function POST(request: Request) {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
   try {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { owner: _owner, ...newBusinessData } = await request.json();
+    const { requestId, ...newBusinessData } = await request.json();
 
     if (!newBusinessData.name || !newBusinessData.category_id || !newBusinessData.subcategory_id) {
          return NextResponse.json({ message: 'Name, Category and Subcategory are required.' }, { status: 400 });
     }
+    
+    // Remove owner info from business payload as it's not in the 'businesses' table schema
+    delete newBusinessData.owner_name;
+    delete newBusinessData.owner_email;
 
     const { data, error } = await supabaseAdmin
       .from('businesses')
       .insert([newBusinessData])
-      .select();
+      .select()
+      .single(); // Use single() as we expect one record back
 
     if (error) {
       console.error('Supabase POST Error:', error);
       return NextResponse.json({ message: 'Error adding business.', error: error.message }, { status: 500 });
     }
+    
+    // If the business was created successfully AND it came from a request, update the request status
+    if (data && requestId) {
+        const { error: updateError } = await supabaseAdmin
+            .from('registration_requests')
+            .update({ status: 'approved' })
+            .eq('id', requestId);
 
-    return NextResponse.json({ message: 'Business added successfully', business: data[0] }, { status: 201 });
+        if (updateError) {
+            console.error('Error updating registration request status:', updateError);
+            // Don't fail the whole request, just log it. The business was still created.
+        }
+    }
+
+    return NextResponse.json({ message: 'Business added successfully', business: data }, { status: 201 });
 
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
@@ -75,6 +92,11 @@ export async function PUT(request: NextRequest) {
     if (!id) {
       return NextResponse.json({ message: 'Business ID is required for updating.' }, { status: 400 });
     }
+    
+    // Remove owner info from business payload
+    delete businessData.owner_name;
+    delete businessData.owner_email;
+
 
     const { data, error } = await supabaseAdmin
       .from('businesses')

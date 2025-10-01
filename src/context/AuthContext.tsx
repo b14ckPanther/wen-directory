@@ -10,34 +10,30 @@ type AuthContextType = {
   user: User | null;
   session: Session | null;
   logout: () => void;
+  loading: boolean; // We expose this for components that might need it
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Updated function to fetch both role and username from the 'profiles' table
-async function fetchUserProfile(userId: string): Promise<{ role: string; name: string; }> {
+// Helper function to fetch user profile
+async function fetchUserProfile(userId: string, userEmail?: string): Promise<{ role: string; name: string; }> {
     const { data, error } = await supabase
         .from('profiles')
-        .select('role, username') // Select both columns
+        .select('role, username')
         .eq('id', userId)
         .single();
         
-    // Get user object from auth to use as a fallback
-    const { data: { user } } = await supabase.auth.getUser();
-    const emailUsername = user?.email?.split('@')[0] || 'User';
+    const emailUsername = userEmail?.split('@')[0] || 'User';
 
     if (error || !data) {
-        console.error('Error fetching user profile, using fallback:', error);
+        console.error('AuthContext: Error fetching user profile. Using fallback.', error);
         return { role: 'user', name: emailUsername };
     }
 
-    // Use the username from the profile, OR the email part, OR a generic 'User'
-    const displayName = data.username || emailUsername;
-
-    return { role: data.role, name: displayName };
+    return { role: data.role, name: data.username || emailUsername };
 }
 
-
+// AuthProvider Component
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -45,59 +41,65 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
-    const getSessionAndProfile = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setSession(session);
-
-      if (session?.user) {
-        const { role, name } = await fetchUserProfile(session.user.id);
-        setUser({ name, role: role as User['role'] });
+    // This effect runs ONCE on component mount to get the initial session
+    // and set up the listener for future changes.
+    const initializeSession = async () => {
+      const { data: { session: initialSession } } = await supabase.auth.getSession();
+      
+      if (initialSession) {
+        setSession(initialSession);
+        try {
+            const profile = await fetchUserProfile(initialSession.user.id, initialSession.user.email);
+            setUser({ name: profile.name, role: profile.role as User['role'] });
+        } catch (e) {
+            console.error("AuthContext: Failed to fetch profile on initial load.", e);
+            setUser(null); // Clear user state on error
+        }
       }
       setLoading(false);
     };
 
-    getSessionAndProfile();
+    initializeSession();
 
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        setSession(session);
-        if (event === 'SIGNED_IN' && session?.user) {
-           const { role, name } = await fetchUserProfile(session.user.id);
-           setUser({ name, role: role as User['role'] });
-           
-           if (role === 'admin') {
-               router.push('/dashboard/admin');
-           } else if (role === 'owner') {
-               router.push('/dashboard/owner');
-           } else {
-               router.push('/');
-           }
-        }
-        if (event === 'SIGNED_OUT') {
+    // Set up the listener for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, currentSession) => {
+        setSession(currentSession);
+        
+        if (currentSession?.user) {
+          try {
+            const profile = await fetchUserProfile(currentSession.user.id, currentSession.user.email);
+            setUser({ name: profile.name, role: profile.role as User['role'] });
+
+            // Only redirect immediately after a successful sign-in
+            if (event === 'SIGNED_IN') {
+              if (profile.role === 'admin') router.push('/dashboard/admin');
+              else if (profile.role === 'owner') router.push('/dashboard/owner');
+              else router.push('/');
+            }
+          } catch (e) {
+             console.error("AuthContext: Failed to fetch profile on auth change.", e);
+             setUser(null);
+          }
+        } else {
+          // User is logged out
           setUser(null);
-          router.push('/login');
         }
       }
     );
 
     return () => {
-      authListener.subscription.unsubscribe();
+      subscription?.unsubscribe();
     };
-  }, [router]);
+  }, [router]); // router is stable and won't cause re-runs.
 
   const logout = async () => {
     await supabase.auth.signOut();
-    setUser(null);
-    setSession(null);
-    router.push('/login');
+    router.push('/login'); // Manually redirect on logout
   };
 
-  if (loading) {
-      return null; // You could render a full-page loader component here for a better UX
-  }
-  
   return (
-    <AuthContext.Provider value={{ user, session, logout }}>
+    <AuthContext.Provider value={{ user, session, logout, loading }}>
       {children}
     </AuthContext.Provider>
   );
@@ -110,4 +112,3 @@ export function useAuth() {
   }
   return context;
 }
-
