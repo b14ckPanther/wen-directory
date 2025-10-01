@@ -7,7 +7,7 @@ import { ArrowRight, Building, Tag, User, Image as ImageIcon, DollarSign, Lucide
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import Image from 'next/image'; // Import the Next.js Image component
+import Image from 'next/image';
 
 // --- Types ---
 type InputFieldProps = {
@@ -18,7 +18,7 @@ type Category = { id: number; name: string; };
 type Subcategory = { id: number; name:string; category_id: number; };
 
 // --- InputField Component ---
-const InputField: React.FC<InputFieldProps> = ({ label, name, placeholder, icon: Icon, value, onChange }) => (
+const InputField: React.FC<InputFieldProps & { required?: boolean }> = ({ label, name, placeholder, icon: Icon, value, onChange, required = true }) => (
     <div>
         <label htmlFor={name} className="block text-sm font-medium text-gray-300 mb-2">{label}</label>
         <div className="relative">
@@ -26,10 +26,13 @@ const InputField: React.FC<InputFieldProps> = ({ label, name, placeholder, icon:
                 <Icon className="text-gray-400" size={18} />
             </div>
             <input type="text" name={name} id={name} placeholder={placeholder} value={value} onChange={onChange}
-                className="w-full bg-[#0A1024] border border-gray-700 rounded-lg py-2 pl-10 pr-4 text-white focus:outline-none focus:ring-2 focus:ring-gold" required />
+                className="w-full bg-[#0A1024] border border-gray-700 rounded-lg py-2 pl-10 pr-4 text-white focus:outline-none focus:ring-2 focus:ring-gold" 
+                required={required} // Use the prop here
+            />
         </div>
     </div>
 );
+
 
 // --- Main Form Component ---
 function BusinessForm() {
@@ -39,11 +42,14 @@ function BusinessForm() {
   const isEditing = Boolean(businessId);
 
   const [formData, setFormData] = useState({
-      name: '', owner: '', category_id: '', subcategory_id: '',
-      image: '', logo: '', subscription: 'أساسي',
+      name: '',
+      category_id: '',
+      subcategory_id: '',
+      image: '',
+      logo: '',
+      subscription: 'أساسي',
   });
   
-  // State for file handling and previews
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
@@ -56,9 +62,7 @@ function BusinessForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-
   useEffect(() => {
-    // Fetch categories and subcategories
     const fetchDropdownData = async () => {
       const { data: cats } = await supabase.from('categories').select('*');
       if (cats) setCategories(cats);
@@ -69,7 +73,6 @@ function BusinessForm() {
   }, []);
 
   useEffect(() => {
-    // If editing, fetch existing business data
     if (isEditing && businessId) {
       const fetchBusinessData = async () => {
         setIsLoading(true);
@@ -79,14 +82,12 @@ function BusinessForm() {
         } else if (data) {
           setFormData({
             name: data.name || '',
-            owner: data.owner || '',
             category_id: data.category_id?.toString() || '',
             subcategory_id: data.subcategory_id?.toString() || '',
             image: data.image || '',
             logo: data.logo || '',
             subscription: data.subscription || 'أساسي',
           });
-          // Set existing images for previews
           setCoverPreview(data.image);
           setLogoPreview(data.logo);
         }
@@ -97,13 +98,11 @@ function BusinessForm() {
   }, [isEditing, businessId]);
   
    useEffect(() => {
-    // Filter subcategories when main category changes
     if (formData.category_id) {
       setFilteredSubcategories(subcategories.filter(sub => sub.category_id === Number(formData.category_id)));
     }
   }, [formData.category_id, subcategories]);
 
-  // Handle file selection and create local previews
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>, type: 'cover' | 'logo') => {
     const file = e.target.files?.[0];
     if (file) {
@@ -128,7 +127,6 @@ function BusinessForm() {
     setFormData(prev => ({ ...prev, category_id: categoryId, subcategory_id: '' }));
   };
   
-  // Updated handleSubmit to manage file uploads
   const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
       setIsLoading(true);
@@ -137,7 +135,6 @@ function BusinessForm() {
       try {
         let { image: coverUrl, logo: logoUrl } = formData;
 
-        // Upload Cover Image if a new one is selected
         if (coverFile) {
             const filePath = `public/${Date.now()}-${coverFile.name.replace(/\s/g, '_')}`;
             const { error: uploadError } = await supabase.storage.from('business-assets').upload(filePath, coverFile);
@@ -146,7 +143,6 @@ function BusinessForm() {
             coverUrl = urlData.publicUrl;
         }
 
-        // Upload Logo Image if a new one is selected
         if (logoFile) {
             const filePath = `public/${Date.now()}-${logoFile.name.replace(/\s/g, '_')}`;
             const { error: uploadError } = await supabase.storage.from('business-assets').upload(filePath, logoFile);
@@ -205,9 +201,8 @@ function BusinessForm() {
                 </div>
             )}
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <InputField label="اسم العمل" name="name" placeholder="مثال: مطعم القدس" icon={Building} value={formData.name} onChange={handleChange} />
-                <InputField label="اسم المالك" name="owner" placeholder="مثال: أحمد خليل" icon={User} value={formData.owner} onChange={handleChange}/>
+            <div>
+                 <InputField label="اسم العمل" name="name" placeholder="مثال: مطعم القدس" icon={Building} value={formData.name} onChange={handleChange} />
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

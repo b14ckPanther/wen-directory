@@ -1,7 +1,8 @@
+// src/components/BusinessCard.tsx
 import Image from 'next/image';
-import { Star, MapPin } from 'lucide-react';
+import { Star, MapPin, ImageIcon } from 'lucide-react'; // Import ImageIcon for the fallback
 import React from 'react';
-import { Business, Restaurant, Clinic } from '@/types'; // Import the shared Business type
+import { Business, Restaurant, Clinic } from '@/types';
 
 type BusinessCardProps = {
   business: Business;
@@ -9,9 +10,7 @@ type BusinessCardProps = {
 };
 
 const BusinessCard: React.FC<BusinessCardProps> = ({ business, onClick }) => {
-  // Type guard to check if the business is a clinic
   const isClinic = (b: Business): b is Clinic => 'specialty' in b;
-  // Type guard to check if the business is a restaurant
   const isRestaurant = (b: Business): b is Restaurant => 'cuisine' in b;
 
   return (
@@ -19,13 +18,20 @@ const BusinessCard: React.FC<BusinessCardProps> = ({ business, onClick }) => {
       onClick={onClick}
       className="w-full text-left bg-[#1B2A41] rounded-lg overflow-hidden shadow-lg hover:shadow-gold/20 transition-shadow duration-300 transform hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-gold/50"
     >
-      <div className="relative h-48">
-        <Image
-          src={business.image}
-          alt={business.name}
-          fill
-          className="object-cover"
-        />
+      <div className="relative h-48 bg-[#0A1024]">
+        {/* ✅ FIX: Conditionally render Image or a fallback */}
+        {business.image ? (
+            <Image
+              src={business.image}
+              alt={business.name}
+              fill
+              className="object-cover"
+            />
+        ) : (
+            <div className="flex items-center justify-center h-full">
+                <ImageIcon size={48} className="text-gray-600" />
+            </div>
+        )}
         {business.isOpen && (
            <span className="absolute top-3 right-3 bg-emerald-500/80 text-white text-xs font-bold px-2 py-1 rounded-full">
            مفتوح الآن
@@ -45,7 +51,6 @@ const BusinessCard: React.FC<BusinessCardProps> = ({ business, onClick }) => {
           </div>
         </div>
         <div className="mt-4 flex flex-wrap gap-2">
-            {/* Safely access properties using the type guards */}
             {(isRestaurant(business) || isClinic(business)) && (
               <span className='text-xs bg-gold/10 text-gold font-semibold px-2 py-1 rounded-full'>
                 {isRestaurant(business) ? business.cuisine : business.specialty}

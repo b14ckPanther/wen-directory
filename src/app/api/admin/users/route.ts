@@ -39,7 +39,6 @@ export async function GET(request: NextRequest) {
   
   const { data: authUsersData, error: authUsersError } = await supabaseAdmin.auth.admin.listUsers();
   
-  // ✅ FIX: Select 'owner' instead of 'owner_id'
   const { data: businessData, error: businessError } = await supabaseAdmin
     .from('businesses')
     .select('id, name, owner');
@@ -72,5 +71,8 @@ export async function GET(request: NextRequest) {
     };
   });
 
-  return NextResponse.json({ users: combinedUsers, businesses: businessData || [] });
+  // ✅ FIX: Filter out any user that has the 'admin' role
+  const filteredUsers = combinedUsers.filter(user => user.role !== 'admin');
+
+  return NextResponse.json({ users: filteredUsers, businesses: businessData || [] });
 }

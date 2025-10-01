@@ -4,7 +4,9 @@ import React, { useState, useMemo } from 'react';
 import Image from 'next/image';
 import { AnimatePresence, motion } from 'framer-motion';
 import { 
-  X, ShoppingCart, ArrowLeft, Utensils, Info, Phone, MapPin, Share2, Instagram, Facebook, Globe, Plus 
+  X, ShoppingCart, ArrowLeft, Utensils, Info, Phone, MapPin, Share2, Instagram, Facebook, Globe, Plus, 
+  ImageIcon, // Import for fallback icon
+  Building // Import for fallback icon
 } from 'lucide-react';
 import { Business, MenuItem, Restaurant } from '@/types';
 
@@ -17,8 +19,14 @@ type BusinessDetailModalProps = {
 
 const MenuItemCard = ({ item, onAddToCart }: { item: MenuItem, onAddToCart: () => void }) => (
   <motion.div layout className="bg-[#1B2A41] rounded-lg p-3 flex items-center gap-4">
-    <div className="w-20 h-20 rounded-md overflow-hidden relative flex-shrink-0">
-      <Image src={item.image} alt={item.name} fill className="object-cover" />
+    <div className="w-20 h-20 rounded-md overflow-hidden relative flex-shrink-0 bg-[#0A1024]">
+      {item.image ? (
+        <Image src={item.image} alt={item.name} fill className="object-cover" />
+      ) : (
+        <div className="flex items-center justify-center h-full">
+          <ImageIcon size={24} className="text-gray-600" />
+        </div>
+      )}
     </div>
     <div className="flex-1">
       <h3 className="font-bold text-gray-200">{item.name}</h3>
@@ -102,7 +110,6 @@ const BusinessDetailModal: React.FC<BusinessDetailModalProps> = ({ business, onC
               <p className="text-gray-400">{business.description}</p>
             </div>
             <div className="grid grid-cols-3 gap-4 px-6">
-              {/* FIX: Made the labels unique to fix the key error */}
               {[
                 { icon: Phone, label: 'الهاتف' }, { icon: MapPin, label: 'الخريطة' }, { icon: Share2, label: 'مشاركة' },
                 { icon: Instagram, label: 'انستجرام' }, { icon: Facebook, label: 'فيسبوك' }, { icon: Globe, label: 'الموقع الإلكتروني' }
@@ -162,10 +169,17 @@ const BusinessDetailModal: React.FC<BusinessDetailModalProps> = ({ business, onC
           className="fixed inset-0 bg-[#0B132B] z-50 flex flex-col"
         >
           <header className="relative flex-shrink-0">
-            <div className="h-40">
-                <Image src={business.image} alt="Cover" fill className="object-cover opacity-30" />
+            <div className="h-40 bg-[#0A1024]">
+                {business.image ? (
+                    <Image src={business.image} alt="Cover" fill className="object-cover opacity-30" />
+                ) : (
+                    <div className="flex items-center justify-center h-full w-full">
+                        <ImageIcon size={48} className="text-gray-600 opacity-30" />
+                    </div>
+                )}
                 <div className="absolute inset-0 bg-gradient-to-t from-[#0B132B] to-transparent"></div>
             </div>
+
             <button onClick={onClose} className="absolute top-4 right-4 z-10 p-2 bg-black/30 rounded-full">
               <X size={28} className="text-white" />
             </button>
@@ -174,11 +188,14 @@ const BusinessDetailModal: React.FC<BusinessDetailModalProps> = ({ business, onC
                 <ArrowLeft size={28} className="text-white" />
               </button>
             )}
-            { isRestaurant(business) &&
-              <div className="absolute -bottom-12 left-1/2 -translate-x-1/2 w-24 h-24 rounded-full border-4 border-[#0B132B] overflow-hidden bg-navy">
-                <Image src={business.logo} alt="Logo" fill className="object-cover p-1" />
-              </div>
-            }
+            
+            <div className="absolute -bottom-12 left-1/2 -translate-x-1/2 w-24 h-24 rounded-full border-4 border-[#0B132B] overflow-hidden bg-navy flex items-center justify-center">
+              {isRestaurant(business) && business.logo ? (
+                 <Image src={business.logo} alt="Logo" fill className="object-cover p-1" />
+              ) : (
+                <Building size={32} className="text-gray-500"/>
+              )}
+            </div>
           </header>
 
           <div className="mt-16 text-center px-4">
