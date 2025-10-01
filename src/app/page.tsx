@@ -5,23 +5,90 @@ import React, { useState, useEffect, useMemo } from 'react';
 import CategoryGrid from '@/components/CategoryGrid';
 import { useLocation } from '@/context/LocationContext';
 import { useChat } from '@/context/ChatContext';
-import { Bot, Search, MessageSquare, ChevronLeft } from 'lucide-react';
+import { Bot, Search, MessageSquare, ChevronLeft, type LucideIcon, House } from 'lucide-react';
 import { motion, Variants } from 'framer-motion';
 import Link from 'next/link';
-import { categorySections } from '@/data/categories'; // Import all categories
+import { supabase } from '@/lib/supabase';
+import { UtensilsCrossed, Coffee, Cake, CookingPot, Truck, Beef, ShoppingBasket, PartyPopper, Stethoscope, Hospital, Pill, Dna, Bot as BotIcon, Scale, Handshake, HeartPulse, Sparkles, Droplet, Scissors, Paintbrush, SprayCan, PersonStanding, Diamond, HardHat, Wrench, Zap, Hammer, PaintRoller, Ruler, Bug, Car, CarTaxiFront, HandCoins, Settings2, Landmark, Calculator, DraftingCompass, Users, Megaphone, Code, PenTool, ShoppingCart, Shirt, Laptop, Sofa, Gift, BookOpen, ToyBrick, Dumbbell, Camera, Music, Clapperboard, Palette, GraduationCap, School, BookUser, Library, Languages, Cat, Watch, Cross, Dog, Bone, Bird, Gamepad2, KeyRound, Factory, Printer, Sprout, Leaf, Recycle, Tractor, TriangleAlert, Bike, Sailboat, ParkingCircle, Building, Brush, Gem, Drama, ClipboardList , Flower, Mail, ShieldCheck, TrendingUp, Repeat, Hotel, Plane, Map, Ticket, Stamp,Warehouse } from 'lucide-react';
+
+// --- Define specific types for our data structure ---
+
+// Type for a single subcategory (like 'Restaurants', 'Cafes')
+type Subcategory = {
+  id: number;
+  name: string;
+  slug: string;
+  icon: LucideIcon;
+  category_id: number;
+};
+
+// Type for a main category section (like 'Food & Dining')
+type CategorySection = {
+  id: number;
+  name: string;
+  title: string;
+  description: string | null;
+  slug: string;
+  image: string | null;
+  categories: Subcategory[]; // This now contains an array of typed Subcategory objects
+};
+
+
+const iconMap: { [key: string]: LucideIcon } = {
+  UtensilsCrossed, Coffee, Cake, CookingPot, Truck, Beef, ShoppingBasket, PartyPopper,
+  Stethoscope, Hospital, Pill, Dna, Bot: BotIcon, Scale, Handshake, HeartPulse, Sparkles, Droplet,
+  Scissors, Paintbrush, SprayCan, PersonStanding, Diamond,
+  HardHat, Wrench, Zap, Hammer, PaintRoller, Ruler, Bug, Car, CarTaxiFront,
+  HandCoins, Settings2, Landmark, Calculator, DraftingCompass, Users,
+  Megaphone, Code, PenTool, ShoppingCart, Shirt, Laptop, Sofa, Gift, BookOpen,
+  ToyBrick, Dumbbell, Camera, Music, Clapperboard, Palette,
+  GraduationCap, School, BookUser, Library, Languages, Cat, Watch, Cross,
+  Dog, Bone, Bird, Gamepad2, KeyRound, Factory, Printer, Sprout, Leaf, Recycle, Tractor,
+  TriangleAlert, Bike, Sailboat, ParkingCircle, Building, Brush, Gem, Drama,
+  ClipboardList , Flower, Mail, ShieldCheck, TrendingUp, House, Repeat, Hotel, Plane, Map, Ticket, Stamp,Warehouse,
+};
+
 
 export default function Home() {
   const { selectedLocation, openLocationModal } = useLocation();
   const { toggleChat } = useChat();
+  const [categorySections, setCategorySections] = useState<CategorySection[]>([]);
 
-  // Carefully selected top 5 categories for the homepage
+  useEffect(() => {
+    const fetchCategories = async () => {
+      const { data: categories, error: catError } = await supabase.from('categories').select('*');
+      const { data: subcategories, error: subError } = await supabase.from('subcategories').select('*');
+
+      if (catError || subError) {
+        console.error(catError || subError);
+        return;
+      }
+
+      const sections: CategorySection[] = categories.map(category => ({
+        ...category,
+        title: category.name,
+        categories: subcategories
+          .filter(sub => sub.category_id === category.id)
+          .map(sub => ({ 
+            ...sub, 
+            icon: iconMap[sub.icon as string] || UtensilsCrossed 
+          }))
+      }));
+
+      setCategorySections(sections);
+    };
+
+    fetchCategories();
+  }, []);
+
+
   const popularCategories = useMemo(() => [
     categorySections.find(s => s.slug === 'طعام'),
     categorySections.find(s => s.slug === 'صحة'),
     categorySections.find(s => s.slug === 'جمال'),
     categorySections.find(s => s.slug === 'منزل-وبناء'),
     categorySections.find(s => s.slug === 'تسوق'),
-  ].filter(Boolean), []); // .filter(Boolean) removes any undefined if a slug isn't found
+  ], [categorySections]);
 
   const [placeholder, setPlaceholder] = useState('');
   const searchSuggestions = useMemo(() => ["على شو بتدوّر؟", "مطاعم...", "أطباء...", "محامون...", "صالونات..."], []);
@@ -131,10 +198,8 @@ export default function Home() {
         </motion.div>
       </section>
 
-      {/* Pass the curated list of popular categories */}
       <CategoryGrid sections={popularCategories} />
 
-      {/* Add a "View All" button */}
       <div className="text-center bg-navy pb-16">
           <Link href="/categories" className="inline-flex items-center gap-2 text-gold font-bold py-3 px-8 rounded-full border-2 border-gold/50 hover:bg-gold/10 transition-all transform hover:scale-105">
               <span>عرض كل الفئات</span>
@@ -142,8 +207,6 @@ export default function Home() {
           </Link>
       </div>
 
-
-      {/* New Feedback Section */}
       <section className="bg-gradient-to-r from-[#0B132B] via-[#1B2A41] to-[#0B132B] py-16">
         <motion.div
           className="container mx-auto px-4 text-center"

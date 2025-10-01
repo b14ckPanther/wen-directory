@@ -5,9 +5,29 @@ import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown } from 'lucide-react';
-import { categorySections as allCategorySections } from '@/data/categories';
+import { ChevronDown, type LucideIcon } from 'lucide-react';
 import TiltCard from './TiltCard';
+
+// --- Define types to match the data structure from Supabase ---
+type Subcategory = {
+  id: number;
+  name: string;
+  slug: string;
+  icon: LucideIcon;
+  category_id: number;
+};
+
+type CategorySection = {
+  id: number;
+  name: string;
+  title: string;
+  description: string | null;
+  slug: string;
+  image: string | null;
+  categories: Subcategory[];
+};
+// --- End type definitions ---
+
 
 const gridContainerVariants = {
   hidden: { opacity: 0 },
@@ -19,14 +39,10 @@ const gridItemVariants = {
   show: { opacity: 1, y: 0, transition: { duration: 0.3 } },
 };
 
-type CategorySection = typeof allCategorySections[0];
-
 type CategoryGridProps = {
-  // Props for when it's a "controlled" component
-  sections?: (CategorySection | undefined)[];
+  sections: (CategorySection | undefined)[];
   openSections?: { [key: string]: boolean };
   onToggleSection?: (title: string) => void;
-  // Prop for when it's "uncontrolled" (like on the homepage)
   startExpanded?: boolean;
 };
 
@@ -38,13 +54,11 @@ export default function CategoryGrid(props: CategoryGridProps) {
     startExpanded = false
   } = props;
 
-  // Determine if the component is controlled or uncontrolled
   const isControlled = controlledOpenSections !== undefined && onToggleSection !== undefined;
 
-  // Use local state only if the component is uncontrolled
   const [internalOpenSections, setInternalOpenSections] = useState(() => {
     if (startExpanded) {
-      return (sections || allCategorySections).reduce((acc, section) => {
+      return (sections || []).reduce((acc, section) => {
         if (section) acc[section.title] = true;
         return acc;
       }, {} as { [key: string]: boolean });
@@ -52,25 +66,24 @@ export default function CategoryGrid(props: CategoryGridProps) {
     return {};
   });
 
-  // Decide which state and toggle function to use
   const openSections = isControlled ? controlledOpenSections : internalOpenSections;
   
   const toggleSection = (title: string) => {
     if (isControlled) {
-      onToggleSection(title);
+      onToggleSection?.(title);
     } else {
       setInternalOpenSections(prev => ({ ...prev, [title]: !prev[title] }));
     }
   };
   
-  const displaySections = sections || allCategorySections;
+  const displaySections = sections || [];
 
   return (
     <section className="bg-navy py-12 md:py-16">
       <div className="container mx-auto px-4">
         {displaySections.map((section) => {
-          if (!section) return null;
-          // This check is now safe because 'openSections' is guaranteed to be an object
+          if (!section || !section.image) return null;
+          
           const isOpen = openSections[section.title] || false;
           
           return (
