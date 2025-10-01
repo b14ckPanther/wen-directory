@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { NextResponse, NextRequest } from 'next/server';
 
 export async function GET(request: NextRequest) {
-  // Create an admin client with the service role key
+  // Create an admin client with the service role key inside the function
   const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!

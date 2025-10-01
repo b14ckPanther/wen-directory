@@ -4,13 +4,15 @@ import { NextResponse, NextRequest } from 'next/server';
 import type { Business } from '@/types';
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+// No client initialization here anymore
 
 // Handles GET requests
 export async function GET() {
+  const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+
   const { data: businesses, error } = await supabaseAdmin
     .from('businesses')
     .select(`*, category: categories (name), subcategory: subcategories (name)`);
@@ -31,8 +33,11 @@ export async function GET() {
 
 // Handles POST requests (Create)
 export async function POST(request: Request) {
+  const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
   try {
-    // We expect the 'owner' property to be absent now
     const { owner: _owner, ...newBusinessData } = await request.json();
 
     if (!newBusinessData.name || !newBusinessData.category_id || !newBusinessData.subcategory_id) {
@@ -41,7 +46,7 @@ export async function POST(request: Request) {
 
     const { data, error } = await supabaseAdmin
       .from('businesses')
-      .insert([newBusinessData]) // Insert the data without the owner
+      .insert([newBusinessData])
       .select();
 
     if (error) {
@@ -59,6 +64,10 @@ export async function POST(request: Request) {
 
 // Handles PUT requests (Update)
 export async function PUT(request: NextRequest) {
+  const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
   try {
     const { id, ...businessData } = await request.json();
 
@@ -87,6 +96,10 @@ export async function PUT(request: NextRequest) {
 
 // --- DELETE Function (Updated Logic) ---
 export async function DELETE(request: NextRequest) {
+    const supabaseAdmin = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
     const { id } = await request.json();
 
     if (!id) {
@@ -94,9 +107,6 @@ export async function DELETE(request: NextRequest) {
     }
 
     try {
-        // ✅ FIX: Perform operations in the correct order
-
-        // 1. Find any profiles linked to this business and unlink them.
         const { error: profileUpdateError } = await supabaseAdmin
             .from('profiles')
             .update({ business_id: null })
@@ -104,7 +114,6 @@ export async function DELETE(request: NextRequest) {
 
         if (profileUpdateError) throw profileUpdateError;
 
-        // 2. Now it's safe to delete the business.
         const { error: deleteError } = await supabaseAdmin
             .from('businesses')
             .delete()

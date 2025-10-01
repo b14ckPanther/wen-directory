@@ -62,7 +62,6 @@ export async function POST(request: NextRequest) {
   }
   
   if (business_id) {
-    // ✅ FIX: Update the 'owner' text column with the new user's username
     const { error: businessUpdateError } = await supabaseAdmin
         .from('businesses')
         .update({ owner: username, subscription: subscription })
