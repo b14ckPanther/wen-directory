@@ -78,12 +78,6 @@ export default function Header() {
     day: 'numeric',
   }).format(dateTime);
 
-  const formattedTime = dateTime.toLocaleTimeString('ar-EG-u-nu-latn', {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: true,
-  });
 
   // Animations
   const dropdownVariants: Variants = {
@@ -123,9 +117,7 @@ export default function Header() {
           >
             {getTitle()}
           </motion.h1>
-          <p className="text-sm text-gray-400 font-mono tracking-wider">
-            {formattedDate} - {formattedTime}
-          </p>
+      
         </div>
 
         {/* Right Section: Notifications + Profile */}
