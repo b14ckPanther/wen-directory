@@ -1,28 +1,38 @@
 'use client';
 import Link from 'next/link';
 import { useState } from 'react';
-import { motion, Variants } from 'framer-motion';
-import { User, Lock, LogIn, ArrowLeft } from 'lucide-react';
-import { useAuth } from '@/context/AuthContext';
+import { motion, AnimatePresence, Variants } from 'framer-motion';
+import { User, Lock, LogIn, ArrowLeft, AlertCircle } from 'lucide-react'; // Import AlertCircle
 import TiltCard from '@/components/TiltCard';
+import { supabase } from '@/lib/supabase';
+import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { login } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null); // State for the error message
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
+    setError(null); // Clear previous errors on a new attempt
 
-    if (username === 'admin@wen.com' && password === 'admin') {
-      login({ name: 'Admin', role: 'admin' });
-    } else if (username === 'owner@wen.com' && password === 'owner') {
-      login({ name: 'صاحب العمل', role: 'owner', subscription: 'مميز', businessType: 'products' });
-    } else {
-      alert('اسم المستخدم أو كلمة المرور غير صحيحة');
+    const { error: authError } = await supabase.auth.signInWithPassword({
+      email: email,
+      password: password,
+    });
+
+    setLoading(false);
+
+    if (authError) {
+      // Set the error message in state instead of using alert()
+      setError('البريد الإلكتروني أو كلمة المرور غير صحيحة.');
     }
+    // No 'else' is needed, the AuthContext handles success.
   };
 
+  // ... containerVariants and itemVariants are unchanged ...
   const containerVariants: Variants = {
     hidden: { opacity: 0 },
     visible: { opacity: 1, transition: { staggerChildren: 0.2, delayChildren: 0.3 } },
@@ -63,23 +73,39 @@ export default function LoginPage() {
               </motion.div>
 
               <motion.form variants={itemVariants} onSubmit={handleLogin} className="space-y-5">
+                {/* NEW: Error Message Display */}
+                <AnimatePresence>
+                  {error && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm rounded-lg p-3 flex items-center gap-2"
+                    >
+                      <AlertCircle size={18} />
+                      <span>{error}</span>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gold/60" size={20} />
-                  <input type="text" placeholder="اسم المستخدم" value={username} onChange={(e) => setUsername(e.target.value)} className="w-full pl-10 pr-4 py-2 rounded-xl border border-gold/30 bg-[#1B2A41]/60 text-gray placeholder-gray/50 focus:outline-none focus:ring-2 focus:ring-gold/50 transition-shadow"/>
+                  <input type="email" placeholder="البريد الإلكتروني" value={email} onChange={(e) => setEmail(e.target.value)} required className="w-full pl-10 pr-4 py-2 rounded-xl border border-gold/30 bg-[#1B2A41]/60 text-gray placeholder-gray/50 focus:outline-none focus:ring-2 focus:ring-gold/50 transition-shadow"/>
                 </div>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gold/60" size={20} />
-                  <input type="password" placeholder="كلمة المرور" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full pl-10 pr-4 py-2 rounded-xl border border-gold/30 bg-[#1B2A41]/60 text-gray placeholder-gray/50 focus:outline-none focus:ring-2 focus:ring-gold/50 transition-shadow"/>
+                  <input type="password" placeholder="كلمة المرور" value={password} onChange={(e) => setPassword(e.target.value)} required className="w-full pl-10 pr-4 py-2 rounded-xl border border-gold/30 bg-[#1B2A41]/60 text-gray placeholder-gray/50 focus:outline-none focus:ring-2 focus:ring-gold/50 transition-shadow"/>
                 </div>
                 <motion.button
                   variants={itemVariants}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.98 }}
                   type="submit"
-                  className="w-full bg-gradient-to-br from-gold to-yellow-500 text-navy py-2.5 px-4 rounded-xl font-bold shadow-lg flex items-center justify-center gap-2 hover:shadow-gold/30 transition-shadow"
+                  disabled={loading}
+                  className="w-full bg-gradient-to-br from-gold to-yellow-500 text-navy py-2.5 px-4 rounded-xl font-bold shadow-lg flex items-center justify-center gap-2 hover:shadow-gold/30 transition-shadow disabled:opacity-70 disabled:cursor-not-allowed"
                 >
                   <LogIn size={20} />
-                  دخول
+                  {loading ? 'جاري الدخول...' : 'دخول'}
                 </motion.button>
               </motion.form>
 
@@ -88,7 +114,6 @@ export default function LoginPage() {
               </motion.div>
             </motion.div>
             
-            {/* New Back to Home Button */}
             <motion.div variants={itemVariants} className="mt-8 pt-6 border-t border-gold/20 w-full">
                 <Link href="/" className="flex items-center justify-center gap-2 text-gray/70 hover:text-gold transition-colors w-full py-2 rounded-lg hover:bg-gold/10">
                     <ArrowLeft size={20} />
@@ -101,3 +126,4 @@ export default function LoginPage() {
     </div>
   );
 }
+

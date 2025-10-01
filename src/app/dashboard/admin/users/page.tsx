@@ -1,118 +1,333 @@
 'use client';
 
-import React from 'react';
-import { motion } from 'framer-motion';
-import { UserPlus, Mail, Shield, Search, MoreVertical } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { UserPlus, Search, MoreVertical, X, Building, Mail, Lock, User, Edit, Trash2 } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/context/AuthContext';
+import type { SubscriptionPlan } from '@/types';
 
-// تحديد الأنواع للبيانات لضمان سلامة الكود
-type UserStatus = 'فعال' | 'غير مفعل';
-type MockUser = {
-  id: number;
-  name: string;
-  business: string;
+// Define a more detailed user type for the admin page
+type AdminUserView = {
+  id: string;
+  username: string;
   email: string;
-  status: UserStatus;
+  role: string;
+  business_id: number | null;
+  business_name: string | null;
 };
 
-const mockUsers: MockUser[] = [
-  { id: 1, name: 'أحمد خليل', business: 'مطعم القدس', email: 'ahmad@email.com', status: 'فعال' },
-  { id: 2, name: 'فاطمة علي', business: 'صالون الملكة', email: 'fatima@email.com', status: 'غير مفعل' },
-  { id: 3, name: 'أحمد ناصر', business: 'ورشة أبو أحمد', email: 'ahmad.n@email.com', status: 'فعال' },
-  { id: 4, name: 'سارة إبراهيم', business: 'عيادة الأمل', email: 'sara@email.com', status: 'غير مفعل' },
-];
+// Define the Business type to match the expected data from Supabase
+type Business = {
+  id: number;
+  name: string;
+  owner_id: string | null;
+};
 
-// دالة مساعدة لتحديد لون حالة المستخدم
-const getStatusChip = (status: UserStatus): string => {
-    switch (status) {
-        case 'فعال': return 'bg-emerald-500/10 text-emerald-400';
-        case 'غير مفعل': return 'bg-yellow-500/10 text-yellow-400';
-        default: return 'bg-gray-500/10 text-gray-400';
+// Define the specific subscription types for the form state
+type FormSubscription = 'أساسي' | 'مميز' | 'ذهبي';
+
+// --- Add/Edit User Modal Component ---
+const UserModal = ({
+    isOpen,
+    onClose,
+    businesses,
+    onUserAddedOrUpdated,
+    editingUser
+}: {
+    isOpen: boolean;
+    onClose: () => void;
+    businesses: Business[];
+    onUserAddedOrUpdated: () => void;
+    editingUser: AdminUserView | null;
+}) => {
+  const { session } = useAuth();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState('');
+  const [businessId, setBusinessId] = useState<string>('');
+  const [subscription, setSubscription] = useState<FormSubscription>('أساسي');
+  const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const isEditing = !!editingUser;
+
+  // Type guard to ensure the selected value is a valid subscription type
+  const isFormSubscription = (value: string): value is FormSubscription => {
+    return ['أساسي', 'مميز', 'ذهبي'].includes(value);
+  };
+
+  useEffect(() => {
+      if (isOpen) {
+        if (isEditing && editingUser) {
+            setEmail(editingUser.email);
+            setUsername(editingUser.username);
+            setBusinessId(editingUser.business_id?.toString() || '');
+            setPassword('');
+        } else {
+            setEmail('');
+            setPassword('');
+            setUsername('');
+            setBusinessId('');
+            setSubscription('أساسي');
+            setError('');
+        }
+      }
+  }, [editingUser, isEditing, isOpen]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!username || !businessId) {
+        setError('Username and an assigned business are required.');
+        return;
     }
-}
+    if (!isEditing && !password) {
+        setError('Password is required for new users.');
+        return;
+    }
+    setIsSubmitting(true);
+    setError('');
 
-export default function ManageUsersPage() {
+    if (!session) {
+        setError('Authentication session not found. Please log in again.');
+        setIsSubmitting(false);
+        return;
+    }
+
+    if (isEditing) {
+        alert('Update functionality is not yet implemented.');
+        setIsSubmitting(false);
+    } else {
+        const response = await fetch('/api/admin/create-user', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session.access_token}`,
+            },
+            body: JSON.stringify({
+                email,
+                password,
+                username,
+                business_id: Number(businessId),
+                subscription,
+            }),
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+            alert('تم إنشاء المستخدم بنجاح!');
+            onUserAddedOrUpdated();
+            onClose();
+        } else {
+            setError(data.message || 'حدث خطأ غير متوقع.');
+        }
+    }
+    setIsSubmitting(false);
+  };
+  
+  const availableBusinesses = businesses.filter(b => !b.owner_id || b.id === editingUser?.business_id);
+
   return (
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-navy/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+        >
+          <motion.div
+            initial={{ scale: 0.9, y: -20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }}
+            className="bg-[#1B2A41] w-full max-w-lg rounded-2xl p-6 border border-gold/20"
+          >
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold text-gold">{isEditing ? 'تعديل مالك العمل' : 'إضافة مالك عمل جديد'}</h2>
+              <button onClick={onClose}><X className="text-gray-400" /></button>
+            </div>
+            <form onSubmit={handleSubmit} className="space-y-4">
+               {error && <p className="text-red-400 text-sm bg-red-500/10 p-2 rounded-md">{error}</p>}
+               <div className="relative">
+                 <Mail className="absolute right-3 top-1/2 -translate-y-1/2 text-gold/60" size={18} />
+                 <input type="email" placeholder="البريد الإلكتروني للمالك" value={email} onChange={e => setEmail(e.target.value)} required disabled={isEditing} className="w-full bg-[#0A1024] pr-10 pl-4 py-2 rounded-lg border border-gray-700 disabled:opacity-50"/>
+               </div>
+               <div className="relative">
+                 <Lock className="absolute right-3 top-1/2 -translate-y-1/2 text-gold/60" size={18} />
+                 <input type="password" placeholder={isEditing ? 'اتركه فارغًا لعدم التغيير' : 'كلمة المرور'} value={password} onChange={e => setPassword(e.target.value)} required={!isEditing} className="w-full bg-[#0A1024] pr-10 pl-4 py-2 rounded-lg border border-gray-700"/>
+               </div>
+               <div className="relative">
+                 <User className="absolute right-3 top-1/2 -translate-y-1/2 text-gold/60" size={18} />
+                 <input type="text" placeholder="اسم المستخدم (للعرض)" value={username} onChange={e => setUsername(e.target.value)} required className="w-full bg-[#0A1024] pr-10 pl-4 py-2 rounded-lg border border-gray-700"/>
+               </div>
+               <div className="relative">
+                 <Building className="absolute right-3 top-1/2 -translate-y-1/2 text-gold/60" size={18} />
+                 <select value={businessId} onChange={e => setBusinessId(e.target.value)} required className="w-full bg-[#0A1024] pr-10 pl-4 py-2 rounded-lg border border-gray-700 appearance-none">
+                   <option value="" disabled>-- اختر العمل التجاري --</option>
+                   {availableBusinesses.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+                 </select>
+               </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-300 mb-2 block">خطة الاشتراك</label>
+                  <select
+                    value={subscription}
+                    onChange={e => {
+                      const value = e.target.value;
+                      if (isFormSubscription(value)) {
+                        setSubscription(value);
+                      }
+                    }}
+                    className="w-full bg-[#0A1024] p-2 rounded-lg border border-gray-700"
+                  >
+                      <option value="أساسي">أساسي (صفحة ثابتة)</option>
+                      <option value="مميز">مميز (إدارة المنتجات)</option>
+                      <option value="ذهبي">ذهبي (إدارة + طلبات)</option>
+                  </select>
+               </div>
+               <button type="submit" disabled={isSubmitting} className="w-full bg-gold text-navy font-bold py-2 rounded-lg disabled:opacity-50">
+                 {isSubmitting ? 'جاري الحفظ...' : isEditing ? 'حفظ التغييرات' : 'إنشاء مستخدم'}
+               </button>
+            </form>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+};
+
+
+// --- Main Page Component ---
+export default function ManageUsersPage() {
+    const [users, setUsers] = useState<AdminUserView[]>([]);
+    const [businesses, setBusinesses] = useState<Business[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editingUser, setEditingUser] = useState<AdminUserView | null>(null);
+
+    const fetchData = async () => {
+        setLoading(true);
+        const { data: profiles, error: profileError } = await supabase
+            .from('profiles')
+            .select(`
+                id,
+                username,
+                role,
+                business_id,
+                business:businesses ( name )
+            `);
+
+        const { data: authUsersData, error: authError } = await supabase.auth.admin.listUsers();
+        
+        const { data: businessData, error: businessError } = await supabase
+            .from('businesses')
+            .select('id, name, owner_id');
+
+        if (profileError || authError || businessError) {
+            console.error(profileError || authError || businessError);
+        } else if (authUsersData?.users && profiles) {
+            const combinedUsers = authUsersData.users.map(authUser => {
+                const profile = profiles.find(p => p.id === authUser.id);
+                
+                let businessName: string | null = null;
+                // Correctly handle the business type, which might be an object or an array
+                if (profile?.business) {
+                    const businessData = profile.business as { name: string } | { name: string }[];
+                    if (Array.isArray(businessData)) {
+                        businessName = businessData[0]?.name || null;
+                    } else if (businessData && typeof businessData === 'object') {
+                        businessName = businessData.name;
+                    }
+                }
+
+                return {
+                    id: authUser.id,
+                    email: authUser.email || 'N/A',
+                    username: profile?.username || 'N/A',
+                    role: profile?.role || 'N/A',
+                    business_id: profile?.business_id || null,
+                    business_name: businessName
+                };
+            });
+            setUsers(combinedUsers);
+            setBusinesses(businessData || []);
+        }
+        setLoading(false);
+    };
+
+    useEffect(() => {
+        fetchData();
+    }, []);
+
+    const handleOpenAddModal = () => {
+        setEditingUser(null);
+        setIsModalOpen(true);
+    };
+    
+    const handleOpenEditModal = (user: AdminUserView) => {
+        setEditingUser(user);
+        setIsModalOpen(true);
+    };
+    
+    const handleDeleteUser = async (user: AdminUserView) => {
+        alert(`Delete functionality for ${user.username} is not yet implemented.`);
+    };
+
+  return (
+    <>
+    <UserModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} businesses={businesses} onUserAddedOrUpdated={fetchData} editingUser={editingUser} />
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
       className="bg-[#1B2A41] p-4 md:p-6 rounded-2xl border border-gray-800 shadow-lg"
     >
-      {/* رأس الصفحة والإجراءات - متجاوب مع الهواتف */}
       <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
         <div className="relative w-full md:w-auto">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20}/>
           <input 
-            type="text" 
-            placeholder="ابحث عن مالك أو عمل..."
-            className="w-full bg-[#0A1024] border border-gray-700 rounded-full py-2 pl-12 pr-4 text-white focus:outline-none focus:ring-2 focus:ring-gold"
+            type="text" placeholder="ابحث عن مالك أو عمل..."
+            className="w-full bg-[#0A1024] border border-gray-700 rounded-full py-2 pl-12 pr-4 text-white"
           />
         </div>
-        <button className="w-full md:w-auto flex items-center justify-center gap-2 bg-gold text-navy font-bold py-2 px-4 rounded-lg hover:bg-yellow-300 transition-colors">
+        <button onClick={handleOpenAddModal} className="w-full md:w-auto flex items-center justify-center gap-2 bg-gold text-navy font-bold py-2 px-4 rounded-lg">
           <UserPlus size={20} />
           <span>إضافة مستخدم جديد</span>
         </button>
       </div>
 
-      {/* عرض الجدول على الشاشات الكبيرة */}
-      <div className="overflow-x-auto hidden md:block">
-        <table className="w-full text-right">
-          <thead className="border-b border-gray-700">
-            <tr>
-              <th className="p-3 text-sm font-semibold text-gray-400">اسم المالك</th>
-              <th className="p-3 text-sm font-semibold text-gray-400">العمل التجاري</th>
-              <th className="p-3 text-sm font-semibold text-gray-400">البريد الإلكتروني</th>
-              <th className="p-3 text-sm font-semibold text-gray-400">حالة الحساب</th>
-              <th className="p-3 text-sm font-semibold text-gray-400">إجراءات</th>
-            </tr>
-          </thead>
-          <tbody>
-            {mockUsers.map(user => (
-              <tr key={user.id} className="border-b border-gray-800 hover:bg-[#0A1024]/50">
-                <td className="p-4 font-semibold text-white">{user.name}</td>
-                <td className="p-4 text-gray-300">{user.business}</td>
-                <td className="p-4 text-gray-300">{user.email}</td>
-                <td className="p-4">
-                  <span className={`px-3 py-1 text-xs font-semibold rounded-full ${getStatusChip(user.status)}`}>
-                    {user.status}
-                  </span>
-                </td>
-                <td className="p-4 flex items-center gap-3">
-                  <button className="text-emerald-400 hover:text-emerald-300" title="تفعيل/إنشاء حساب"><UserPlus size={18} /></button>
-                  <button className="text-blue-400 hover:text-blue-300" title="تغيير الصلاحيات"><Shield size={18} /></button>
-                  <button className="text-yellow-400 hover:text-yellow-300" title="إرسال رسالة"><Mail size={18} /></button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      
-      {/* عرض البطاقات على شاشات الهواتف */}
-      <div className="grid grid-cols-1 gap-4 md:hidden">
-        {mockUsers.map(user => (
-          <div key={user.id} className="bg-[#0A1024] p-4 rounded-lg border border-gray-800 flex flex-col gap-4">
-            <div className="flex justify-between items-start">
-              <div>
-                <p className="font-bold text-white text-lg">{user.name}</p>
-                <p className="text-sm text-gold">{user.business}</p>
-              </div>
-              <button className="text-gray-400"><MoreVertical size={20} /></button>
+        {loading ? <p className="text-center text-gray-400">جاري تحميل المستخدمين...</p> : (
+            <div className="overflow-x-auto">
+                <table className="w-full text-right">
+                    <thead className="border-b border-gray-700">
+                    <tr>
+                        <th className="p-3 text-sm font-semibold text-gray-400">اسم المستخدم</th>
+                        <th className="p-3 text-sm font-semibold text-gray-400">البريد الإلكتروني</th>
+                        <th className="p-3 text-sm font-semibold text-gray-400">العمل التجاري</th>
+                        <th className="p-3 text-sm font-semibold text-gray-400">الدور</th>
+                        <th className="p-3 text-sm font-semibold text-gray-400 text-center">إجراءات</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {users.map(user => (
+                        <tr key={user.id} className="border-b border-gray-800 hover:bg-[#0A1024]/50">
+                        <td className="p-4 font-semibold text-white">{user.username}</td>
+                        <td className="p-4 text-gray-300">{user.email}</td>
+                        <td className="p-4 text-gray-300">{user.business_name || <span className="text-gray-500">غير معين</span>}</td>
+                        <td className="p-4">
+                            <span className={`px-3 py-1 text-xs font-semibold rounded-full ${user.role === 'admin' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-blue-500/10 text-blue-400'}`}>
+                            {user.role}
+                            </span>
+                        </td>
+                        <td className="p-4 text-center">
+                            <div className="flex items-center justify-center gap-4">
+                                <button onClick={() => handleOpenEditModal(user)} className="text-blue-400 hover:text-blue-300" title="تعديل"><Edit size={18} /></button>
+                                <button onClick={() => handleDeleteUser(user)} className="text-red-400 hover:text-red-300" title="حذف"><Trash2 size={18} /></button>
+                            </div>
+                        </td>
+                        </tr>
+                    ))}
+                    </tbody>
+                </table>
             </div>
-            <div className="text-sm text-gray-300 break-all">{user.email}</div>
-            <div className="flex justify-between items-center mt-2">
-              <span className={`px-3 py-1 text-xs font-semibold rounded-full ${getStatusChip(user.status)}`}>
-                {user.status}
-              </span>
-              <div className="flex items-center gap-3">
-                  <button className="text-emerald-400 hover:text-emerald-300" title="تفعيل/إنشاء حساب"><UserPlus size={18} /></button>
-                  <button className="text-blue-400 hover:text-blue-300" title="تغيير الصلاحيات"><Shield size={18} /></button>
-                  <button className="text-yellow-400 hover:text-yellow-300" title="إرسال رسالة"><Mail size={18} /></button>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
+        )}
     </motion.div>
+    </>
   );
 }
+
