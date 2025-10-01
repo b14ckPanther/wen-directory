@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight, Building, Tag, User, Image as ImageIcon, DollarSign, LucideIcon, Layers } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { categorySections } from '@/data/categories';
+import { supabase } from '@/lib/supabase';
 
 // InputField component remains the same
 
@@ -16,6 +16,17 @@ type InputFieldProps = {
     icon: LucideIcon;
     value: string;
     onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+};
+
+type Category = {
+  id: number;
+  name: string;
+};
+
+type Subcategory = {
+  id: number;
+  name:string;
+  category_id: number;
 };
 
 const InputField: React.FC<InputFieldProps> = ({ label, name, placeholder, icon: Icon, value, onChange }) => (
@@ -39,36 +50,47 @@ const InputField: React.FC<InputFieldProps> = ({ label, name, placeholder, icon:
     </div>
 );
 
-
 export default function BusinessFormPage() {
   const router = useRouter();
-  const isEditing = false; // Placeholder
+  const isEditing = false;
 
   const [formData, setFormData] = useState({
       name: '',
       owner: '',
-      mainCategory: '',
-      subcategory: '',
+      category_id: '',
+      subcategory_id: '',
       image: '',
       logo: '',
       subscription: 'أساسي',
   });
 
-  const [subcategories, setSubcategories] = useState<{name: string, slug: string}[]>([]);
+const [categories, setCategories] = useState<Category[]>([]);
+  const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
+  const [filteredSubcategories, setFilteredSubcategories] = useState<Subcategory[]>([]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    useEffect(() => {
+    const fetchCategories = async () => {
+      const { data: categoriesData, error: categoriesError } = await supabase.from('categories').select('*');
+      if (categoriesError) console.error('Error fetching categories:', categoriesError);
+      else setCategories(categoriesData);
+
+      const { data: subcategoriesData, error: subcategoriesError } = await supabase.from('subcategories').select('*');
+      if (subcategoriesError) console.error('Error fetching subcategories:', subcategoriesError);
+      else setSubcategories(subcategoriesData);
+    };
+    fetchCategories();
+  }, []);
+ const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
       const { name, value } = e.target;
       setFormData(prev => ({ ...prev, [name]: value }));
   };
-  
+
   const handleMainCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const mainCategoryTitle = e.target.value;
-    setFormData(prev => ({ ...prev, mainCategory: mainCategoryTitle, subcategory: '' }));
-    
-    const selectedSection = categorySections.find(section => section.title === mainCategoryTitle);
-    setSubcategories(selectedSection ? selectedSection.categories : []);
+    const categoryId = e.target.value;
+    setFormData(prev => ({ ...prev, category_id: categoryId, subcategory_id: '' }));
+    setFilteredSubcategories(subcategories.filter(sub => sub.category_id === Number(categoryId)));
   };
-  
+
   const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
       try {
@@ -84,7 +106,8 @@ export default function BusinessFormPage() {
           alert(`تم تسجيل العمل "${formData.name}" بنجاح!`);
           router.push('/dashboard/admin/businesses');
         } else {
-          alert('حدث خطأ أثناء إضافة العمل.');
+          const errorData = await response.json();
+          alert(`حدث خطأ أثناء إضافة العمل: ${errorData.message}`);
         }
       } catch (error) {
         console.error("Failed to submit form:", error);
@@ -92,7 +115,7 @@ export default function BusinessFormPage() {
       }
   };
 
-  return (
+   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
@@ -109,55 +132,55 @@ export default function BusinessFormPage() {
             </h1>
         </div>
 
-      <form onSubmit={handleSubmit} className="bg-[#1B2A41] p-8 rounded-2xl border border-gray-800 space-y-6">
+   <form onSubmit={handleSubmit} className="bg-[#1B2A41] p-8 rounded-2xl border border-gray-800 space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <InputField label="اسم العمل" name="name" placeholder="مثال: مطعم القدس" icon={Building} value={formData.name} onChange={handleChange} />
             <InputField label="اسم المالك" name="owner" placeholder="مثال: أحمد خليل" icon={User} value={formData.owner} onChange={handleChange}/>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-                <label htmlFor="mainCategory" className="block text-sm font-medium text-gray-300 mb-2">الفئة الرئيسية</label>
+                <label htmlFor="category_id" className="block text-sm font-medium text-gray-300 mb-2">الفئة الرئيسية</label>
                 <div className="relative">
                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <Tag className="text-gray-400" size={18} />
                     </div>
-                    <select 
-                        id="mainCategory" 
-                        name="mainCategory"
-                        value={formData.mainCategory}
+                    <select
+                        id="category_id"
+                        name="category_id"
+                        value={formData.category_id}
                         onChange={handleMainCategoryChange}
                         className="w-full bg-[#0A1024] border border-gray-700 rounded-lg py-2 pl-10 pr-4 text-white focus:outline-none focus:ring-2 focus:ring-gold appearance-none"
                         required
                     >
                         <option value="">-- اختر فئة رئيسية --</option>
-                        {categorySections.map((section) => (
-                            <option key={section.slug} value={section.title}>
-                                {section.title}
+                        {categories.map((cat) => (
+                            <option key={cat.id} value={cat.id}>
+                                {cat.name}
                             </option>
                         ))}
                     </select>
                 </div>
             </div>
             <div>
-                <label htmlFor="subcategory" className="block text-sm font-medium text-gray-300 mb-2">الفئة الفرعية</label>
-                <div className="relative">
+                <label htmlFor="subcategory_id" className="block text-sm font-medium text-gray-300 mb-2">الفئة الفرعية</label>
+                 <div className="relative">
                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <Layers className="text-gray-400" size={18} />
                     </div>
-                    <select 
-                        id="subcategory" 
-                        name="subcategory"
-                        value={formData.subcategory}
+                    <select
+                        id="subcategory_id"
+                        name="subcategory_id"
+                        value={formData.subcategory_id}
                         onChange={handleChange}
-                        disabled={!formData.mainCategory}
+                        disabled={!formData.category_id}
                         className="w-full bg-[#0A1024] border border-gray-700 rounded-lg py-2 pl-10 pr-4 text-white focus:outline-none focus:ring-2 focus:ring-gold appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
                         required
                     >
                         <option value="">-- اختر فئة فرعية --</option>
-                        {subcategories.map((category) => (
-                            <option key={category.slug} value={category.slug}>
-                                {category.name}
+                        {filteredSubcategories.map((sub) => (
+                            <option key={sub.id} value={sub.id}>
+                                {sub.name}
                             </option>
                         ))}
                     </select>
