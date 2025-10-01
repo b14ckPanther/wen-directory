@@ -1,7 +1,7 @@
 // src/components/CategoryGrid.tsx
-'use client'; 
+'use client';
 
-import React, { useState } from 'react'; 
+import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -19,38 +19,58 @@ const gridItemVariants = {
   show: { opacity: 1, y: 0, transition: { duration: 0.3 } },
 };
 
-// Define the type for a single category section
 type CategorySection = typeof allCategorySections[0];
 
 type CategoryGridProps = {
+  // Props for when it's a "controlled" component
+  sections?: (CategorySection | undefined)[];
+  openSections?: { [key: string]: boolean };
+  onToggleSection?: (title: string) => void;
+  // Prop for when it's "uncontrolled" (like on the homepage)
   startExpanded?: boolean;
-  sections?: (CategorySection | undefined)[]; // Allow sections to be passed as an optional prop
 };
 
-export default function CategoryGrid({ startExpanded = false, sections }: CategoryGridProps) {
-  const displaySections = sections || allCategorySections; // Use passed sections or fallback to all
+export default function CategoryGrid(props: CategoryGridProps) {
+  const {
+    sections,
+    openSections: controlledOpenSections,
+    onToggleSection,
+    startExpanded = false
+  } = props;
 
-  const [openSections, setOpenSections] = useState<{[key: string]: boolean}>(() => {
+  // Determine if the component is controlled or uncontrolled
+  const isControlled = controlledOpenSections !== undefined && onToggleSection !== undefined;
+
+  // Use local state only if the component is uncontrolled
+  const [internalOpenSections, setInternalOpenSections] = useState(() => {
     if (startExpanded) {
-      return displaySections.reduce((acc, section) => {
-        if (section) {
-          return {...acc, [section.title]: true };
-        }
+      return (sections || allCategorySections).reduce((acc, section) => {
+        if (section) acc[section.title] = true;
         return acc;
-      }, {});
+      }, {} as { [key: string]: boolean });
     }
     return {};
   });
 
+  // Decide which state and toggle function to use
+  const openSections = isControlled ? controlledOpenSections : internalOpenSections;
+  
   const toggleSection = (title: string) => {
-    setOpenSections(prev => ({ ...prev, [title]: !prev[title] }));
+    if (isControlled) {
+      onToggleSection(title);
+    } else {
+      setInternalOpenSections(prev => ({ ...prev, [title]: !prev[title] }));
+    }
   };
+  
+  const displaySections = sections || allCategorySections;
 
   return (
     <section className="bg-navy py-12 md:py-16">
       <div className="container mx-auto px-4">
         {displaySections.map((section) => {
-          if (!section) return null; // Safely skip if a section is undefined
+          if (!section) return null;
+          // This check is now safe because 'openSections' is guaranteed to be an object
           const isOpen = openSections[section.title] || false;
           
           return (
