@@ -1,25 +1,46 @@
+// src/app/api/businesses/route.ts
 
 import { NextResponse } from 'next/server';
 import type { Business } from '@/types';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@supabase/supabase-js';
+
+// Create an admin client once to use for both GET and POST
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 // Handles GET requests to /api/businesses
 export async function GET() {
-  const { data: businesses, error } = await supabase
+  // Use the admin client to fetch businesses and join related category data
+  const { data: businesses, error } = await supabaseAdmin
     .from('businesses')
-    .select('*');
+    .select(`
+      *,
+      category: categories (name),
+      subcategory: subcategories (name)
+    `);
 
   if (error) {
     console.error('Supabase GET Error:', error);
     return NextResponse.json(
-      { message: 'Failed to fetch businesses from Supabase.', error: error.message }, 
+      { message: 'Failed to fetch businesses from Supabase.', error: error.message },
       { status: 500 }
     );
   }
+  
+  // Flatten the category/subcategory objects for easier use on the frontend
+  const formattedBusinesses = businesses.map(b => ({
+    ...b,
+    category: b.category?.name || 'N/A',
+    subcategory: b.subcategory?.name || 'N/A'
+  }));
 
-  return NextResponse.json(businesses as Business[]);
+
+  return NextResponse.json(formattedBusinesses as Business[]);
 }
 
+// POST function remains the same
 export async function POST(request: Request) {
   try {
     const newBusiness = await request.json();
@@ -30,8 +51,8 @@ export async function POST(request: Request) {
         subscription: newBusiness.subscription,
         image: newBusiness.image,
         logo: newBusiness.logo,
-        category_id: newBusiness.category_id, // Use the new foreign key
-        subcategory_id: newBusiness.subcategory_id, // Use the new foreign key
+        category_id: newBusiness.category_id,
+        subcategory_id: newBusiness.subcategory_id,
         rating: 0,
         distance: '0km',
         is_open: true,
@@ -48,8 +69,7 @@ export async function POST(request: Request) {
          return NextResponse.json({ message: 'Category and Subcategory are required.' }, { status: 400 });
     }
 
-
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('businesses')
       .insert([payload])
       .select();
