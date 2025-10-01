@@ -1,14 +1,14 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse, NextRequest } from 'next/server';
 
-export async function GET(request: NextRequest) {
-  // Create an admin client with the service role key
+export async function POST(request: NextRequest) {
+  // 1. Create an admin client with the service role key to perform protected operations
   const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
 
-  // Get the token from the request headers to identify who is making the request
+  // 2. Extract the authorization token from the request headers
   const authHeader = request.headers.get('Authorization');
   const token = authHeader?.split('Bearer ')[1];
 
@@ -16,68 +16,75 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ message: 'Authentication token required.' }, { status: 401 });
   }
 
-  // Verify the token and get the user making the request
+  // 3. Verify the token to get the user making the request
   const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token);
 
   if (userError || !user) {
     return NextResponse.json({ message: 'Invalid token or user not found.' }, { status: 401 });
   }
 
-  // Check if this authenticated user is an admin
-  const { data: profile, error: profileError } = await supabaseAdmin
+  // 4. Check if the authenticated user has an 'admin' role in the 'profiles' table
+  const { data: profile } = await supabaseAdmin
     .from('profiles')
     .select('role')
     .eq('id', user.id)
     .single();
 
-  if (profileError || !profile || profile.role !== 'admin') {
+  if (!profile || profile.role !== 'admin') {
     return NextResponse.json({ message: 'Forbidden: Admins only.' }, { status: 403 });
   }
 
-  // --- If the user is a confirmed admin, proceed to fetch all data ---
+  // 5. If the user is a confirmed admin, proceed to process the request body
+  const { email, password, username, business_id, subscription } = await request.json();
 
-  const { data: profilesData, error: profilesFetchError } = await supabaseAdmin
-    .from('profiles')
-    .select('id, username, role, business_id, business:businesses ( name )');
-  
-  const { data: authUsersData, error: authUsersError } = await supabaseAdmin.auth.admin.listUsers();
-  
-  const { data: businessData, error: businessError } = await supabaseAdmin
-    .from('businesses')
-    .select('id, name, owner_id');
-
-  if (profilesFetchError || authUsersError || businessError) {
-      console.error("Error fetching data:", profilesFetchError || authUsersError || businessError);
-      return NextResponse.json({ message: 'Failed to fetch initial data.' }, { status: 500 });
+  if (!email || !password || !username || !business_id) {
+    return NextResponse.json({ message: 'Email, password, username, and business ID are required.' }, { status: 400 });
   }
 
-  // --- **FIXED PART** ---
-  // Safely check that all required data exists before processing.
-  // This prevents the server from crashing and leaving the page "stuck".
-  if (!authUsersData?.users || !profilesData) {
-      return NextResponse.json({ message: 'Could not retrieve user and profile data.' }, { status: 500 });
-  }
-
-  // Combine the data (this logic is now securely on the server)
-  const combinedUsers = authUsersData.users.map(authUser => {
-    const userProfile = profilesData.find(p => p.id === authUser.id);
-    let businessName: string | null = null;
-    
-    if (userProfile?.business) {
-      const biz = userProfile.business as { name: string } | { name: string }[];
-      businessName = Array.isArray(biz) ? biz[0]?.name : biz.name;
-    }
-
-    return {
-      id: authUser.id,
-      email: authUser.email || 'N/A',
-      username: userProfile?.username || 'N/A',
-      role: userProfile?.role || 'user',
-      business_id: userProfile?.business_id || null,
-      business_name: businessName,
-    };
+  // 6. Create the new user in the Supabase authentication system
+  const { data: newUser, error: creationError } = await supabaseAdmin.auth.admin.createUser({
+    email: email,
+    password: password,
+    email_confirm: true, // Auto-confirm the email since an admin is creating it
   });
 
-  return NextResponse.json({ users: combinedUsers, businesses: businessData || [] });
+  if (creationError) {
+    console.error('Supabase user creation error:', creationError);
+    return NextResponse.json({ message: creationError.message }, { status: 500 });
+  }
+  
+  if (!newUser || !newUser.user) {
+      return NextResponse.json({ message: 'Failed to create user.' }, { status: 500 });
+  }
+
+  // 7. If user creation is successful, create their corresponding profile
+  const { error: profileError } = await supabaseAdmin.from('profiles').insert({
+    id: newUser.user.id,
+    username: username,
+    role: 'owner', // All users created here are 'owners'
+    business_id: business_id,
+  });
+
+  if (profileError) {
+    console.error('Supabase profile creation error:', profileError);
+    // If profile creation fails, delete the auth user to prevent orphaned accounts
+    await supabaseAdmin.auth.admin.deleteUser(newUser.user.id);
+    return NextResponse.json({ message: profileError.message }, { status: 500 });
+  }
+  
+  // 8. Update the associated business with the new owner's ID and subscription plan
+  if (business_id) {
+    const { error: businessUpdateError } = await supabaseAdmin
+        .from('businesses')
+        .update({ owner_id: newUser.user.id, subscription: subscription })
+        .eq('id', business_id);
+
+    if (businessUpdateError) {
+        // Log the error but don't block the response, as the user is already created
+        console.error('Error updating business subscription:', businessUpdateError);
+    }
+  }
+
+  return NextResponse.json({ message: 'User created successfully', user: newUser.user }, { status: 201 });
 }
 
