@@ -1,14 +1,12 @@
+// src/app/dashboard/admin/businesses/page.tsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Edit, Trash2, PlusCircle, Search, MoreVertical } from 'lucide-react';
+import { Edit, Trash2, PlusCircle, Search } from 'lucide-react';
 import type { Business, BusinessStatus } from '@/types';
 
-// The mockBusinesses array is no longer needed here
-
-// Helper function for status chip color remains the same
 const getStatusChip = (status: BusinessStatus): string => {
     switch (status) {
         case 'مقبول': return 'bg-emerald-500/10 text-emerald-400';
@@ -22,21 +20,47 @@ export default function ManageBusinessesPage() {
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchBusinesses = async () => {
-      try {
-        const response = await fetch('/api/businesses');
-        const data = await response.json();
-        setBusinesses(data);
-      } catch (error) {
-        console.error("Failed to fetch businesses:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchBusinesses = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/businesses');
+      const data = await response.json();
+      setBusinesses(data);
+    } catch (error) {
+      console.error("Failed to fetch businesses:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchBusinesses();
   }, []);
+  
+  // ✅ NEW: Handle Delete Function
+  const handleDelete = async (bizId: number, bizName: string) => {
+    if (window.confirm(`Are you sure you want to delete "${bizName}"? This action cannot be undone.`)) {
+        try {
+            const response = await fetch('/api/businesses', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: bizId }),
+            });
+
+            if (response.ok) {
+                // Refresh the list after a successful delete
+                fetchBusinesses(); 
+            } else {
+                const errorData = await response.json();
+                console.error("Failed to delete business:", errorData.message);
+                alert(`Error: ${errorData.message}`); // Shows an error if deletion fails
+            }
+        } catch (error) {
+            console.error("Network error:", error);
+            alert("A network error occurred while trying to delete the business.");
+        }
+    }
+  };
 
   if (loading) {
     return <div>Loading businesses...</div>;
@@ -67,8 +91,8 @@ export default function ManageBusinessesPage() {
         </Link>
       </div>
 
-      {/* Businesses Table - Now uses the 'businesses' state */}
-      <div className="overflow-x-auto hidden md:block">
+      {/* Businesses Table */}
+      <div className="overflow-x-auto">
         <table className="w-full text-right">
           <thead className="border-b border-gray-700">
             <tr>
@@ -84,7 +108,7 @@ export default function ManageBusinessesPage() {
             {businesses.map(biz => (
               <tr key={biz.id} className="border-b border-gray-800 hover:bg-[#0A1024]/50">
                 <td className="p-4 font-semibold text-white">{biz.name}</td>
-                <td className="p-4 text-gray-300">{biz.category}</td>
+                <td className="p-4 text-gray-300">{biz.subcategory}</td>
                 <td className="p-4 text-gray-300">{biz.owner}</td>
                 <td className="p-4">
                   <span className={`px-3 py-1 text-xs font-semibold rounded-full ${getStatusChip(biz.status)}`}>
@@ -94,45 +118,18 @@ export default function ManageBusinessesPage() {
                 <td className="p-4 text-gray-300">{biz.subscription}</td>
                 <td className="p-4 text-center">
                     <div className="flex items-center justify-center gap-3">
+                      {/* ✅ FIX: Pass the business ID as a query parameter */}
                       <Link href={`/dashboard/admin/businesses/form?id=${biz.id}`}>
                         <button className="text-blue-400 hover:text-blue-300" title="تعديل"><Edit size={18} /></button>
                       </Link>
-                      <button className="text-red-400 hover:text-red-300" title="حذف"><Trash2 size={18} /></button>
+                      {/* ✅ FIX: Call the new handleDelete function */}
+                      <button onClick={() => handleDelete(biz.id, biz.name)} className="text-red-400 hover:text-red-300" title="حذف"><Trash2 size={18} /></button>
                     </div>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
-      </div>
-
-      {/* Business Cards - For Mobile View */}
-      <div className="grid grid-cols-1 gap-4 md:hidden">
-        {businesses.map(biz => (
-            <div key={biz.id} className="bg-[#0A1024] p-4 rounded-lg border border-gray-800 flex flex-col gap-4">
-                <div className="flex justify-between items-start">
-                    <div>
-                        <p className="font-bold text-white text-lg">{biz.name}</p>
-                        <p className="text-sm text-gold">{biz.category}</p>
-                    </div>
-                     <button className="text-gray-400"><MoreVertical size={20} /></button>
-                </div>
-                <div className="text-sm text-gray-300">
-                    <span className="font-semibold text-gray-500">المالك: </span>{biz.owner}
-                </div>
-                <div className="flex justify-between items-center mt-2">
-                    <span className={`px-3 py-1 text-xs font-semibold rounded-full ${getStatusChip(biz.status)}`}>
-                        {biz.status}
-                    </span>
-                    <div className="flex items-center gap-3">
-                        <Link href={`/dashboard/admin/businesses/form?id=${biz.id}`}>
-                            <button className="text-blue-400 hover:text-blue-300" title="تعديل"><Edit size={18} /></button>
-                        </Link>
-                        <button className="text-red-400 hover:text-red-300" title="حذف"><Trash2 size={18} /></button>
-                    </div>
-                </div>
-            </div>
-        ))}
       </div>
     </motion.div>
   );
