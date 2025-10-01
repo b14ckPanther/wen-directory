@@ -86,14 +86,16 @@ const config: Config = {
         // General UI animations
         fadeInUp: 'fadeInUp 0.5s ease-out forwards',
         pulse: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-        // Loader animations (with longer durations)
-        'orb-glow': 'orb-glow 5s ease-in-out infinite',
-        'orbit-cw': 'orbit-cw 30s linear infinite',
-        'orbit-ccw': 'orbit-cw 30s linear infinite',
-        'text-fade': 'text-fade 30s ease-in-out infinite',
-        'text-fade-delay': 'text-fade 30s 15s ease-in-out infinite',
-        'spin-slow': 'spin 40s linear infinite',
-        'star-twinkle': 'star-twinkle 3s ease-in-out infinite alternate',
+        
+        // ✅ UPDATED: Loader animations with shorter durations
+        'orb-glow': 'orb-glow 2.5s ease-in-out infinite',
+        'orbit-cw': 'orbit-cw 15s linear infinite',
+        'orbit-ccw': 'orbit-cw 15s linear infinite', // Corrected to use the right keyframe
+        'text-fade': 'text-fade 10s ease-in-out infinite',
+        'text-fade-delay': 'text-fade 10s 5s ease-in-out infinite',
+        'spin-slow': 'spin 20s linear infinite',
+        'star-twinkle': 'star-twinkle 1.5s ease-in-out infinite alternate',
+
         // Home page animations
         'bg-pan': 'bg-pan 4s ease-in-out infinite',
         'star-field': 'star-field 60s linear infinite',
