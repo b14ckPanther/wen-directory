@@ -29,7 +29,8 @@ export default function CategoryResultsPage() {
         const response = await fetch('/api/businesses');
         const allBusinesses: Business[] = await response.json();
         
-        const filtered = allBusinesses.filter(biz => biz.category === categoryName);
+        // ✅ FIX: Filter by 'subcategory' instead of 'category'
+        const filtered = allBusinesses.filter(biz => biz.subcategory === categoryName);
         
         setBusinesses(filtered);
       } catch (error) {

@@ -1,3 +1,5 @@
+// src/types.ts
+
 // --- Shared User & Auth Types ---
 export type UserRole = 'admin' | 'owner' | 'user';
 export type SubscriptionPlan = 'أساسي' | 'مميز' | 'ذهبي' | null;
@@ -32,6 +34,7 @@ type BusinessBase = {
   isOpen: boolean;
   // Add the missing properties here
   category: string;
+  subcategory: string; // ✅ ADD THIS LINE
   owner: string;
   status: BusinessStatus;
   subscription: SubscriptionPlan;
