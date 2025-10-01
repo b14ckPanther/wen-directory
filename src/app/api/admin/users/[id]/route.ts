@@ -2,7 +2,7 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { NextResponse, NextRequest } from 'next/server';
 
-// Helper function for admin check (unchanged)
+// Helper function for admin check
 async function checkAdmin(request: NextRequest, supabaseAdmin: SupabaseClient) {
   const authHeader = request.headers.get('Authorization');
   const token = authHeader?.split('Bearer ')[1];
