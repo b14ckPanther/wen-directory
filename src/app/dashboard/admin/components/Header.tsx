@@ -70,13 +70,13 @@ export default function Header() {
     return 'لوحة التحكم الرئيسية';
   };
 
-  // Format date/time (Arabic)
-  const formattedDate = new Intl.DateTimeFormat('ar-EG-u-nu-latn', {
+  // Format date/time (Arabic) - Simplified for cross-browser compatibility
+  const formattedDate = dateTime.toLocaleDateString('ar-EG', {
     weekday: 'long',
     year: 'numeric',
     month: 'long',
     day: 'numeric',
-  }).format(dateTime);
+  });
 
 
   // Animations
@@ -113,7 +113,7 @@ export default function Header() {
             key={getTitle()}
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-2xl font-bold text-white tracking-wide"
+            className="text-md font-bold text-white tracking-wide"
           >
             {getTitle()}
           </motion.h1>
