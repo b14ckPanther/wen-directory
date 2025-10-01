@@ -38,6 +38,7 @@ export async function POST(request: Request) {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
   try {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { owner: _owner, ...newBusinessData } = await request.json();
 
     if (!newBusinessData.name || !newBusinessData.category_id || !newBusinessData.subcategory_id) {

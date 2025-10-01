@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { ChevronDown, Bell, LogOut, Settings } from 'lucide-react';
+import { ChevronDown, Bell } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 
 export default function Header() {

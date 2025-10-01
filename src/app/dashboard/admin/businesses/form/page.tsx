@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect, Suspense, ChangeEvent } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowRight, Building, Tag, User, Image as ImageIcon, DollarSign, LucideIcon, Layers, AlertCircle, CheckCircle, UploadCloud } from 'lucide-react';
+import { ArrowRight, Building, Tag, Image as DollarSign, LucideIcon, Layers, AlertCircle, CheckCircle, UploadCloud } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';

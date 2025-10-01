@@ -1,11 +1,10 @@
 // src/app/dashboard/admin/users/page.tsx
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { UserPlus, Search, X, Building, Mail, Lock, User, Edit, Trash2, AlertCircle, CheckCircle } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
-import type { SubscriptionPlan } from '@/types';
 
 // --- Type Definitions ---
 type AdminUserView = { id: string; username: string; email: string; role: string; business_id: number | null; business_name: string | null;};
@@ -136,11 +135,9 @@ export default function ManageUsersPage() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingUser, setEditingUser] = useState<AdminUserView | null>(null);
     const { session } = useAuth();
-    // ✅ NEW: State for page-level messages (for delete action)
     const [pageMessage, setPageMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-    // ✅ FIX: This function now correctly fetches from your secure API route
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         if (!session) return;
         setLoading(true);
         try {
@@ -148,9 +145,9 @@ export default function ManageUsersPage() {
                 headers: { 'Authorization': `Bearer ${session.access_token}` }
             });
             if (!response.ok) {
-                const err = await response.json();
-                console.error("Error fetching data:", err);
-                throw new Error(err.message || 'Failed to fetch user data');
+                const errData = await response.json();
+                console.error("Error fetching data:", errData);
+                throw new Error(errData.message || 'Failed to fetch user data');
             }
             const data = await response.json();
             setUsers(data.users || []);
@@ -161,18 +158,17 @@ export default function ManageUsersPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [session]);
 
     useEffect(() => {
         if (session) {
             fetchData();
         }
-    }, [session]);
+    }, [session, fetchData]);
 
     const handleOpenAddModal = () => { setEditingUser(null); setIsModalOpen(true); };
     const handleOpenEditModal = (user: AdminUserView) => { setEditingUser(user); setIsModalOpen(true); };
     
-    // ✅ UPDATED: handleDeleteUser now uses inline messaging instead of alert()
     const handleDeleteUser = async (userToDelete: AdminUserView) => {
         if (!session) {
             setPageMessage({ type: 'error', text: "Authentication required." });
@@ -188,13 +184,13 @@ export default function ManageUsersPage() {
                 const data = await response.json();
                 if (response.ok) {
                     setPageMessage({ type: 'success', text: data.message });
-                    fetchData(); // Refresh list
+                    fetchData();
                 } else {
                     throw new Error(data.message);
                 }
             } catch (error) {
-                const err = error instanceof Error ? error.message : 'Unknown error';
-                setPageMessage({ type: 'error', text: `Failed to delete user: ${err}` });
+                const message = error instanceof Error ? error.message : 'Unknown error';
+                setPageMessage({ type: 'error', text: `Failed to delete user: ${message}` });
             } finally {
                 setTimeout(() => setPageMessage(null), 5000);
             }
@@ -207,7 +203,6 @@ export default function ManageUsersPage() {
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
       className="bg-[#1B2A41] p-4 md:p-6 rounded-2xl border border-gray-800 shadow-lg">
       
-        {/* ✅ NEW: Inline message display area */}
         <AnimatePresence>
             {pageMessage && (
                 <motion.div

@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import { motion, Variants } from 'framer-motion';
-import { User, Mail, MessageSquare, Star, Send, ArrowLeft } from 'lucide-react';
+import { User, Mail, Star, Send } from 'lucide-react';
 import Link from 'next/link';
 
 const containerVariants: Variants = {
