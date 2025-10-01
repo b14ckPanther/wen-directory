@@ -10,12 +10,11 @@ type AuthContextType = {
   user: User | null;
   session: Session | null;
   logout: () => void;
-  loading: boolean; // We expose this for components that might need it
+  loading: boolean;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Helper function to fetch user profile
 async function fetchUserProfile(userId: string, userEmail?: string): Promise<{ role: string; name: string; }> {
     const { data, error } = await supabase
         .from('profiles')
@@ -33,7 +32,6 @@ async function fetchUserProfile(userId: string, userEmail?: string): Promise<{ r
     return { role: data.role, name: data.username || emailUsername };
 }
 
-// AuthProvider Component
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -41,8 +39,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
-    // This effect runs ONCE on component mount to get the initial session
-    // and set up the listener for future changes.
     const initializeSession = async () => {
       const { data: { session: initialSession } } = await supabase.auth.getSession();
       
@@ -53,7 +49,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setUser({ name: profile.name, role: profile.role as User['role'] });
         } catch (e) {
             console.error("AuthContext: Failed to fetch profile on initial load.", e);
-            setUser(null); // Clear user state on error
+            setUser(null);
         }
       }
       setLoading(false);
@@ -61,7 +57,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     initializeSession();
 
-    // Set up the listener for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, currentSession) => {
         setSession(currentSession);
@@ -71,7 +66,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const profile = await fetchUserProfile(currentSession.user.id, currentSession.user.email);
             setUser({ name: profile.name, role: profile.role as User['role'] });
 
-            // Only redirect immediately after a successful sign-in
             if (event === 'SIGNED_IN') {
               if (profile.role === 'admin') router.push('/dashboard/admin');
               else if (profile.role === 'owner') router.push('/dashboard/owner');
@@ -82,7 +76,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
              setUser(null);
           }
         } else {
-          // User is logged out
           setUser(null);
         }
       }
@@ -91,11 +84,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       subscription?.unsubscribe();
     };
-  }, [router]); // router is stable and won't cause re-runs.
+  }, [router]);
 
   const logout = async () => {
     await supabase.auth.signOut();
-    router.push('/login'); // Manually redirect on logout
+    setUser(null);
+    setSession(null);
+    router.replace('/login'); 
   };
 
   return (
