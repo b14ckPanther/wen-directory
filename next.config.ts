@@ -1,8 +1,15 @@
+// next.config.ts
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
   images: {
     remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'pefiqonbxpymsikghlqp.supabase.co',
+        port: '',
+        pathname: '/storage/v1/object/public/**',
+      },
       {
         protocol: 'https',
         hostname: 'img.freepik.com',
@@ -16,7 +23,7 @@ const nextConfig = {
         pathname: '/**',
       },
       {
-        protocol: 'https',
+        protocol: 'https', 
         hostname: 'cdn.iconscout.com',
         port: '',
         pathname: '/**',
