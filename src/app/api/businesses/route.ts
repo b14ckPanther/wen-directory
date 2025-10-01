@@ -33,7 +33,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     // We expect the 'owner' property to be absent now
-    const { owner, ...newBusinessData } = await request.json();
+    const { owner: _owner, ...newBusinessData } = await request.json();
 
     if (!newBusinessData.name || !newBusinessData.category_id || !newBusinessData.subcategory_id) {
          return NextResponse.json({ message: 'Name, Category and Subcategory are required.' }, { status: 400 });

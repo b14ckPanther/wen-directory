@@ -20,6 +20,7 @@ async function checkAdmin(request: NextRequest, supabaseAdmin: SupabaseClient) {
 
 
 // --- PUT (Update) Function ---
+// ✅ FIX: Correctly type the second argument
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   const userId = params.id;
 
@@ -52,6 +53,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 }
 
 // --- DELETE Function ---
+// ✅ FIX: Correctly type the second argument
 export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   const userId = params.id;
 
