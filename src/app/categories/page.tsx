@@ -1,4 +1,3 @@
-// src/app/categories/page.tsx
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
@@ -7,11 +6,24 @@ import CategoryGrid from '@/components/CategoryGrid';
 import { useAuth } from '@/context/AuthContext';
 import ExpandCollapseToggle from '@/components/ExpandCollapseToggle';
 import { supabase } from '@/lib/supabase';
-import { type LucideIcon, UtensilsCrossed, Edit } from 'lucide-react';
+import { type LucideIcon, Edit, UtensilsCrossed, Coffee, Cake, CookingPot, Truck, Beef, ShoppingBasket, PartyPopper, Stethoscope, Hospital, Pill, Dna, Bot as BotIcon, Scale, Handshake, HeartPulse, Sparkles, Droplet, Scissors, Paintbrush, SprayCan, PersonStanding, Diamond, HardHat, Wrench, Zap, Hammer, PaintRoller, Ruler, Bug, Car, CarTaxiFront, HandCoins, Settings2, Landmark, Calculator, DraftingCompass, Users, Megaphone, Code, PenTool, ShoppingCart, Shirt, Laptop, Sofa, Gift, BookOpen, ToyBrick, Dumbbell, Camera, Music, Clapperboard, Palette, GraduationCap, School, BookUser, Library, Languages, Cat, Watch, Cross, Dog, Bone, Bird, Gamepad2, KeyRound, Factory, Printer, Sprout, Leaf, Recycle, Tractor, TriangleAlert, Bike, Sailboat, ParkingCircle, Building, Brush, Gem, Drama, ClipboardList , Flower, Mail, ShieldCheck, TrendingUp, House, Repeat, Hotel, Plane, Map, Ticket, Stamp,Warehouse } from 'lucide-react';
 
 type Subcategory = { id: number; name: string; slug: string; icon: LucideIcon | string; category_id: number; };
 type CategorySection = { id: number; name: string; title: string; description: string | null; slug: string; image: string | null; categories: Subcategory[]; };
-const iconMap: { [key: string]: LucideIcon } = { UtensilsCrossed: UtensilsCrossed };
+
+const iconMap: { [key: string]: LucideIcon } = {
+  UtensilsCrossed, Coffee, Cake, CookingPot, Truck, Beef, ShoppingBasket, PartyPopper,
+  Stethoscope, Hospital, Pill, Dna, Bot: BotIcon, Scale, Handshake, HeartPulse, Sparkles, Droplet,
+  Scissors, Paintbrush, SprayCan, PersonStanding, Diamond,
+  HardHat, Wrench, Zap, Hammer, PaintRoller, Ruler, Bug, Car, CarTaxiFront,
+  HandCoins, Settings2, Landmark, Calculator, DraftingCompass, Users,
+  Megaphone, Code, PenTool, ShoppingCart, Shirt, Laptop, Sofa, Gift, BookOpen,
+  ToyBrick, Dumbbell, Camera, Music, Clapperboard, Palette,
+  GraduationCap, School, BookUser, Library, Languages, Cat, Watch, Cross,
+  Dog, Bone, Bird, Gamepad2, KeyRound, Factory, Printer, Sprout, Leaf, Recycle, Tractor,
+  TriangleAlert, Bike, Sailboat, ParkingCircle, Building, Brush, Gem, Drama,
+  ClipboardList , Flower, Mail, ShieldCheck, TrendingUp, House, Repeat, Hotel, Plane, Map, Ticket, Stamp,Warehouse,
+};
 
 
 export default function CategoriesPage() {
@@ -98,7 +110,7 @@ export default function CategoriesPage() {
   return (
     <main className="bg-navy min-h-screen flex flex-col">
       <section className="bg-gradient-to-r from-[#0B132B] via-[#1B2A41] to-[#0B132B] py-16 text-center">
-        <h1 className="text-4xl md:text-5xl font-bold text-gold">Categories</h1>
+        <h1 className="text-4xl md:text-5xl font-bold text-gold">الفئات</h1>
         <p className="text-gray mt-4 text-lg md:text-xl">
           Browse all available services and sectors
         </p>
