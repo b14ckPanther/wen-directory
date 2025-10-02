@@ -1,13 +1,31 @@
-import React from 'react';
-// FIX: Using absolute paths for robust module resolution
+'use client';
+
+import React, { useEffect } from 'react';
 import Sidebar from '@/app/dashboard/admin/components/Sidebar';
 import Header from '@/app/dashboard/admin/components/Header';
+import { useAuth } from '@/context/AuthContext';
 
 export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const { user, logout } = useAuth();
+
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (user?.role === 'admin') {
+        logout();
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [user, logout]);
+
   return (
     <div className="flex h-screen bg-navy text-gray-200 font-sans">
       {/* Sidebar fixed on the right */}

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
+import React, { createContext, useState, useContext, ReactNode, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { User } from '@/types';
 import { supabase } from '@/lib/supabase';
@@ -37,6 +37,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const inactivityTimer = useRef<NodeJS.Timeout | null>(null);
+
+
+  const logout = useCallback(async () => {
+    await supabase.auth.signOut();
+    router.push('/');
+  }, [router]);
+
+  const resetInactivityTimer = useCallback(() => {
+    if (inactivityTimer.current) {
+      clearTimeout(inactivityTimer.current);
+    }
+    inactivityTimer.current = setTimeout(() => {
+        if (user?.role === 'admin') {
+            logout();
+        }
+    }, 5 * 60 * 1000); // 5 minutes
+  }, [logout, user]);
+
+  useEffect(() => {
+    if (user?.role === 'admin') {
+      const events = ['mousemove', 'keydown', 'scroll', 'click'];
+      
+      const resetTimer = () => resetInactivityTimer();
+
+      events.forEach(event => window.addEventListener(event, resetTimer));
+      resetInactivityTimer(); // Initial timer start
+
+      return () => {
+        events.forEach(event => window.removeEventListener(event, resetTimer));
+        if (inactivityTimer.current) {
+          clearTimeout(inactivityTimer.current);
+        }
+      };
+    }
+  }, [user, resetInactivityTimer]);
+
 
   useEffect(() => {
     const initializeSession = async () => {
@@ -89,11 +126,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       subscription?.unsubscribe();
     };
   }, [router]);
-
-  const logout = async () => {
-    await supabase.auth.signOut();
-    // The onAuthStateChange listener will handle the redirect.
-  };
 
   return (
     <AuthContext.Provider value={{ user, session, logout, loading }}>

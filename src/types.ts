@@ -51,15 +51,18 @@ export type BusinessStatus = 'مقبول' | 'قيد المراجعة' | 'مرف�
 type BusinessBase = {
   id: number;
   name: string;
-  image: string | null; // Can be null
+  image: string | null;
   rating: number;
   distance: string;
   isOpen: boolean;
   category: string;
   subcategory: string;
-  owner: string | null; // Can be null
+  owner: string | null;
   status: BusinessStatus;
   subscription: SubscriptionPlan;
+  phone: string | null;
+  category_id: number | null;
+  subcategory_id: number | null;
 };
 
 // Specific type for Restaurants

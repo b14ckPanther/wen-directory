@@ -4,7 +4,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Edit, Trash2, PlusCircle, ChevronDown, Image as ImageIcon, Loader, AlertTriangle, CheckCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import { useAuth } from '@/context/AuthContext'; // Import useAuth
+import { useAuth } from '@/context/AuthContext';
+import Link from 'next/link';
 
 // --- Types ---
 type Subcategory = { id: number; name: string; slug: string; category_id: number; };
@@ -202,6 +203,11 @@ export default function ManageCategoriesPage() {
                                                 <div key={subCat.id} className="flex items-center justify-between py-2 border-b border-gray-700/50 last:border-b-0">
                                                     <span className="text-gray-300">{subCat.name}</span>
                                                     <div className="flex items-center gap-3">
+                                                        <Link href={`/dashboard/admin/categories/${subCat.slug}`} title="إدارة المصالح في هذه الفئة">
+                                                            <div className="text-green-400 hover:text-green-300">
+                                                                <Edit size={16} />
+                                                            </div>
+                                                        </Link>
                                                         <button onClick={() => setModalState({ mode: 'edit-sub', data: subCat })} className="text-blue-400 hover:text-blue-300" title="تعديل"><Edit size={16} /></button>
                                                         <button onClick={() => setDeleteState({ type: 'sub', data: subCat })} className="text-red-400 hover:text-red-300" title="حذف"><Trash2 size={16} /></button>
                                                     </div>
