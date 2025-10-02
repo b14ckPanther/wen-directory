@@ -1,20 +1,126 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { useParams } from 'next/navigation';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
 import BusinessCard from '@/components/BusinessCard';
-import FilterChips from '@/components/FilterChips';
 import FilterModal from '@/components/FilterModal';
 import BusinessDetailModal from '@/components/BusinessDetailModal';
-import { Map, Edit, PlusCircle, AlertTriangle } from 'lucide-react';
-import { Business } from '@/types';
+import { Map, Edit, PlusCircle, AlertTriangle, ChevronsRight, SlidersHorizontal, Star, Zap } from 'lucide-react';
+import { Business, Subcategory } from '@/types';
 import Loader from '@/components/Loader';
 import { useAuth } from '@/context/AuthContext';
-import { motion } from 'framer-motion';
-import BusinessFormModal from '@/components/BusinessFormModal'; // <-- IMPORT THE NEW MODAL
+import { motion, AnimatePresence, useTransform, useScroll } from 'framer-motion';
+import BusinessFormModal from '@/components/BusinessFormModal';
 import { supabase } from '@/lib/supabase';
+import DynamicIcon from '@/components/DynamicIcon';
 
-// Simple Confirmation Modal for Deletion
+type ParentCategory = { id: number; name: string; slug: string; };
+
+// --- NEW 3D CAROUSEL COMPONENT ---
+const CategoryCarousel = ({ subcategories, activeSlug, parentCategory }: { subcategories: Subcategory[], activeSlug: string | undefined, parentCategory: ParentCategory | null }) => {
+    const [activeIndex, setActiveIndex] = useState(0);
+
+    useEffect(() => {
+        const foundIndex = subcategories.findIndex(s => s.slug === activeSlug);
+        setActiveIndex(foundIndex !== -1 ? foundIndex : 0);
+    }, [activeSlug, subcategories]);
+
+    // This creates the "3D" effect. Items further from the center are smaller and less opaque.
+    const getStyle = (index: number) => {
+        const distance = Math.abs(activeIndex - index);
+        const scale = Math.max(1 - distance * 0.2, 0.5);
+        const opacity = Math.max(1 - distance * 0.3, 0.3);
+        const zIndex = subcategories.length - distance;
+        return { scale, opacity, zIndex };
+    };
+
+    return (
+        <div className="relative w-full h-80 flex flex-col items-center justify-center pt-8 overflow-hidden">
+             {parentCategory && (
+                <motion.nav 
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2 }}
+                    className="flex justify-center items-center gap-2 text-sm text-gold/70 mb-4 z-20"
+                >
+                    <Link href="/categories" className="hover:text-gold transition-colors">كل الفئات</Link>
+                    <ChevronsRight size={16} />
+                    <span className="cursor-default font-semibold text-gold">{parentCategory.name}</span>
+                </motion.nav>
+            )}
+            
+            <div className="relative w-full h-56 flex items-center justify-center" style={{ perspective: '1000px' }}>
+                {subcategories.map((sub, index) => {
+                    const { scale, opacity, zIndex } = getStyle(index);
+                    const position = (index - activeIndex) * 100; // Adjust spacing
+
+                    return (
+                        <motion.div
+                            key={sub.id}
+                            initial={{ x: `${position}%`, scale: 0, opacity: 0 }}
+                            animate={{ x: `${position}%`, scale, opacity }}
+                            transition={{ type: 'spring', stiffness: 200, damping: 25 }}
+                            style={{ zIndex, position: 'absolute' }}
+                        >
+                            <Link href={`/categories/${sub.slug}`} scroll={false}>
+                                <div
+                                    className={`flex flex-col items-center justify-center w-32 h-32 rounded-full transition-all duration-300 cursor-pointer
+                                    ${sub.slug === activeSlug 
+                                        ? 'bg-gold shadow-[0_0_20px_theme(colors.gold),0_0_40px_theme(colors.gold)]' 
+                                        : 'bg-[#1B2A41]/70 backdrop-blur-sm border border-gold/20'
+                                    }`}
+                                >
+                                    <DynamicIcon name={sub.icon || 'HelpCircle'} size={32} className={sub.slug === activeSlug ? 'text-navy' : 'text-gold/80'} />
+                                    <span className={`font-bold text-center text-sm mt-2 ${sub.slug === activeSlug ? 'text-navy' : 'text-gray-300'}`}>{sub.name}</span>
+                                </div>
+                            </Link>
+                        </motion.div>
+                    );
+                })}
+            </div>
+        </div>
+    );
+};
+
+
+const ConstellationFilters = ({ onOpenFilterModal }: { onOpenFilterModal: () => void }) => {
+    const filters = [
+        { label: 'كل الفلاتر', icon: SlidersHorizontal, main: true },
+        { label: 'الأعلى تقييماً', icon: Star, main: false },
+        { label: 'مفتوح الآن', icon: Zap, main: false },
+    ];
+    
+    return (
+        <div className="container mx-auto px-4 py-6 flex justify-center items-center gap-4 flex-wrap">
+            {filters.map((filter, index) => {
+                const Icon = filter.icon;
+                return (
+                    <motion.button
+                        key={filter.label}
+                        onClick={filter.main ? onOpenFilterModal : undefined}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.2 + index * 0.1 }}
+                        whileHover={{ y: -3, scale: 1.05,
+                           boxShadow: filter.main ? "0 0 15px theme(colors.gold / 0.5)" : "0 0 15px hsl(0 0% 100% / 0.1)"
+                        }}
+                        className={`flex-shrink-0 flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-full transition-all duration-300
+                            ${filter.main 
+                                ? 'text-gold bg-gold/10 border border-gold/30' 
+                                : 'text-gray-300 bg-[#1B2A41]/50 border border-gray-700'
+                            }`
+                        }
+                    >
+                        <Icon size={16} />
+                        <span>{filter.label}</span>
+                    </motion.button>
+                )
+            })}
+        </div>
+    );
+}
+
 const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm, businessName }: { isOpen: boolean; onClose: () => void; onConfirm: () => void; businessName: string; }) => {
     if (!isOpen) return null;
     return (
@@ -32,19 +138,19 @@ const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm, businessName }: {
     );
 };
 
-
 export default function CategoryResultsPage() {
     const params = useParams();
+    const router = useRouter();
     const categoryName = decodeURIComponent(params.categoryName as string);
     const { user } = useAuth();
 
     const [businesses, setBusinesses] = useState<Business[]>([]);
-    const [subcategory, setSubcategory] = useState<{ id: number; name: string } | null>(null);
+    const [subcategory, setSubcategory] = useState<(Subcategory & { category_id: number }) | null>(null);
+    const [parentCategory, setParentCategory] = useState<ParentCategory | null>(null);
+    const [siblingSubcategories, setSiblingSubcategories] = useState<Subcategory[]>([]);
     const [loading, setLoading] = useState(true);
     const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
     const [selectedBusiness, setSelectedBusiness] = useState<Business | null>(null);
-
-    // Admin Edit State
     const [isEditMode, setIsEditMode] = useState(false);
     const [isFormModalOpen, setIsFormModalOpen] = useState(false);
     const [editingBusiness, setEditingBusiness] = useState<Business | null>(null);
@@ -54,103 +160,90 @@ export default function CategoryResultsPage() {
         if (!categoryName) return;
         setLoading(true);
         try {
-            const { data: subcategoryData, error: subcategoryError } = await supabase.from('subcategories').select('id, name').eq('slug', categoryName).single();
-            if (subcategoryError) throw new Error("Subcategory not found");
+            const { data: subcategoryData, error: subcategoryError } = await supabase.from('subcategories').select('*').eq('slug', categoryName).single();
+            if (subcategoryError || !subcategoryData) throw new Error("الفئة الفرعية مش موجودة");
             setSubcategory(subcategoryData);
             
+            if (subcategoryData.category_id) {
+                const { data: parentData, error: parentError } = await supabase.from('categories').select('id, name, slug').eq('id', subcategoryData.category_id).single();
+                if (parentError) throw parentError;
+                setParentCategory(parentData);
+
+                const { data: siblingsData, error: siblingsError } = await supabase.from('subcategories').select('*').eq('category_id', subcategoryData.category_id).order('position');
+                if (siblingsError) throw siblingsError;
+                setSiblingSubcategories(siblingsData);
+            }
+
             const { data: businessesData, error: businessesError } = await supabase.from('businesses').select('*').eq('subcategory_id', subcategoryData.id);
             if (businessesError) throw businessesError;
             
             const formattedBusinesses = businessesData.map(b => ({ ...b, subcategory: subcategoryData.name })) as Business[];
             setBusinesses(formattedBusinesses);
         } catch (error) {
-            console.error("Failed to fetch businesses:", error);
+            console.error("فشل بجلب البيانات:", error);
+            router.push('/categories');
         } finally {
             setLoading(false);
         }
-    }, [categoryName]);
+    }, [categoryName, router]);
 
     useEffect(() => {
         fetchData();
     }, [fetchData]);
 
-    // --- Admin Action Handlers ---
-    const handleAddBusiness = () => {
-        setEditingBusiness(null);
-        setIsFormModalOpen(true);
-    };
-
-    const handleEdit = (biz: Business) => {
-        setEditingBusiness(biz);
-        setIsFormModalOpen(true);
-    };
-
-    const handleDelete = (biz: Business) => {
-        setDeletingBusiness(biz);
-    };
+    const handleAddBusiness = () => { setEditingBusiness(null); setIsFormModalOpen(true); };
+    const handleEdit = (biz: Business) => { setEditingBusiness(biz); setIsFormModalOpen(true); };
+    const handleDelete = (biz: Business) => { setDeletingBusiness(biz); };
     
     const confirmDelete = async () => {
         if (!deletingBusiness) return;
-        
         const { error } = await supabase.from('businesses').delete().eq('id', deletingBusiness.id);
-
-        if (error) {
-            alert('Failed to delete business.');
-        } else {
-            fetchData(); // Refresh list
-        }
+        if (error) { alert('ما قدرنا نمحى المصلحة.'); } else { fetchData(); }
         setDeletingBusiness(null);
     };
 
-    if (loading) {
-        return <Loader />;
-    }
+    if (loading) return <Loader />;
 
     return (
         <>
-            {/* User Modals */}
             <FilterModal isOpen={isFilterModalOpen} onClose={() => setIsFilterModalOpen(false)} />
             <BusinessDetailModal business={selectedBusiness} onClose={() => setSelectedBusiness(null)} />
             
-            {/* Admin Modals */}
             {user?.role === 'admin' && (
                 <>
-                    <BusinessFormModal
-                        isOpen={isFormModalOpen}
-                        onClose={() => setIsFormModalOpen(false)}
-                        onSave={fetchData}
-                        business={editingBusiness}
-                        initialSubcategoryId={subcategory?.id}
-                    />
-                    <DeleteConfirmationModal
-                        isOpen={!!deletingBusiness}
-                        onClose={() => setDeletingBusiness(null)}
-                        onConfirm={confirmDelete}
-                        businessName={deletingBusiness?.name || ''}
-                    />
+                    <BusinessFormModal isOpen={isFormModalOpen} onClose={() => setIsFormModalOpen(false)} onSave={fetchData} business={editingBusiness} initialSubcategoryId={subcategory?.id} />
+                    <DeleteConfirmationModal isOpen={!!deletingBusiness} onClose={() => setDeletingBusiness(null)} onConfirm={confirmDelete} businessName={deletingBusiness?.name || ''} />
                 </>
             )}
 
             <div className="bg-navy min-h-screen">
-                <section className="relative bg-gradient-to-r from-[#0B132B] via-[#1B2A41] to-[#0B132B] py-12 text-center">
-                    <h1 className="text-4xl md:text-5xl font-bold text-gold capitalize">{categoryName}</h1>
-                    <p className="text-gray mt-4 text-lg md:text-xl">تصفح أفضل الخيارات المتاحة في منطقتك</p>
-
+                <section className="relative bg-gradient-to-b from-[#0B132B] via-[#1B2A41] to-[#0A1024] pt-12 pb-4 text-center overflow-hidden">
                     {user?.role === 'admin' && (
-                        <div className="absolute top-4 right-4">
+                        <div className="absolute top-4 right-4 z-20">
                             <button onClick={() => setIsEditMode(!isEditMode)} className={`flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-full transition-colors ${isEditMode ? 'bg-red-500/20 text-red-300 border border-red-500/50' : 'bg-gold/10 text-gold border border-gold/50'}`}>
                                 <Edit size={16} />
-                                {isEditMode ? 'إنهاء التعديل' : 'تعديل الصفحة'}
+                                {isEditMode ? 'خلص تعديل' : 'عدّل الصفحة'}
                             </button>
                         </div>
                     )}
+                    {siblingSubcategories.length > 0 && (
+                        <CategoryCarousel 
+                            subcategories={siblingSubcategories} 
+                            activeSlug={subcategory?.slug} 
+                            parentCategory={parentCategory}
+                        />
+                    )}
+                </section>
+                
+                {/* Section for Filters */}
+                <section className="bg-[#0A1024] border-y border-gold/10">
+                     <ConstellationFilters onOpenFilterModal={() => setIsFilterModalOpen(true)} />
                 </section>
 
                 <main className="container mx-auto px-4 py-8">
-                    <FilterChips onOpenFilterModal={() => setIsFilterModalOpen(false)} />
-                    <div className="flex justify-between items-center my-4">
-                        <p className="text-gray/80">تم العثور على <span className="font-bold text-gold">{businesses.length}</span> نتائج</p>
-                        <button className="hidden md:flex items-center gap-2 px-4 py-2 rounded-lg bg-gold/10 text-gold"><Map size={20} /> <span className="font-semibold">عرض الخريطة</span></button>
+                    <div className="flex justify-between items-center mb-4">
+                        <p className="text-gray/80">لقينا <span className="font-bold text-gold">{businesses.length}</span> نتائج</p>
+                        <button className="hidden md:flex items-center gap-2 px-4 py-2 rounded-lg bg-gold/10 text-gold"><Map size={20} /> <span className="font-semibold">شوف الخريطة</span></button>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -160,7 +253,7 @@ export default function CategoryResultsPage() {
                         {isEditMode && (
                             <button onClick={handleAddBusiness} className="w-full text-left bg-transparent border-2 border-dashed border-gray-600 rounded-lg overflow-hidden shadow-lg hover:border-gold hover:text-gold transition-all duration-300 flex flex-col items-center justify-center min-h-[280px]">
                                 <PlusCircle size={48} className="mb-4" />
-                                <h3 className="text-xl font-bold">إضافة عمل جديد</h3>
+                                <h3 className="text-xl font-bold">زيد مصلحة جديدة</h3>
                             </button>
                         )}
                     </div>
@@ -169,3 +262,4 @@ export default function CategoryResultsPage() {
         </>
     );
 }
+

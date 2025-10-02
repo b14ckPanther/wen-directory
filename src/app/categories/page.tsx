@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import CategoryGrid from '@/components/CategoryGrid';
 import { useAuth } from '@/context/AuthContext';
 import ExpandCollapseToggle from '@/components/ExpandCollapseToggle';
@@ -83,15 +83,15 @@ export default function CategoriesPage() {
   };
 
   if (loading) {
-    return <div className="text-center text-gold p-10">Loading Categories...</div>;
+    return <div className="text-center text-gold p-10">لحظة، بنحمّل الفئات...</div>;
   }
 
   return (
     <main className="bg-navy min-h-screen flex flex-col">
       <section className="bg-gradient-to-r from-[#0B132B] via-[#1B2A41] to-[#0B132B] py-16 text-center">
-        <h1 className="text-4xl md:text-5xl font-bold text-gold">الفئات</h1>
+        <h1 className="text-4xl md:text-5xl font-bold text-gold">كل الفئات</h1>
         <p className="text-gray mt-4 text-lg md:text-xl">
-          Browse all available services and sectors
+          شوف كل الخدمات والمصالح الموجودة عنا
         </p>
 
         {user?.role === 'admin' && (
@@ -105,7 +105,7 @@ export default function CategoriesPage() {
                 }`}
               >
                 <Edit size={18} />
-                {isEditMode ? 'Finish Editing' : 'Edit Page'}
+                {isEditMode ? 'خلص تعديل' : 'عدّل الصفحة'}
               </button>
             </div>
         )}
