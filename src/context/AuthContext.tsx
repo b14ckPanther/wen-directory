@@ -59,11 +59,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, currentSession) => {
-        // On SIGNED_OUT, redirect immediately
         if (event === 'SIGNED_OUT') {
           setUser(null);
           setSession(null);
-          window.location.href = '/login';
+          router.push('/'); // Redirect to the home screen
           return;
         }
 
@@ -93,9 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     await supabase.auth.signOut();
-    // The onAuthStateChange listener will handle the redirect and state clearing.
-    // As a fallback for any race conditions, we'll force it.
-    window.location.href = '/login';
+    // The onAuthStateChange listener will handle the redirect.
   };
 
   return (
