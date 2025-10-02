@@ -1,24 +1,29 @@
-// src/components/CategoryGrid.tsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, GripVertical, PlusCircle, Trash2, type LucideIcon } from 'lucide-react';
+import { ChevronDown, GripVertical, PlusCircle, Trash2 } from 'lucide-react';
 import TiltCard from './TiltCard';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy, rectSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { CategoryModal, SubcategoryModal, ConfirmationModal, CategoryData, SubcategoryData } from './modals/AdminModals';
+import DynamicIcon from './DynamicIcon';
+import type { Subcategory as SubcategoryType, CategorySection as CategorySectionType } from '@/types';
 
-// --- Types ---
-type Subcategory = { id: number; name: string; slug: string; icon: LucideIcon | string; category_id: number; };
-type CategorySection = { id: number; name: string; title: string; description: string | null; slug: string; image: string | null; categories: Subcategory[]; };
-type CategoryGridProps = { sections: (CategorySection | undefined)[]; isEditMode: boolean; openSections?: { [key: string]: boolean }; onToggleSection?: (title: string) => void; forceReload: () => void; };
+// --- Type for the component's props ---
+type CategoryGridProps = {
+  sections: CategorySectionType[];
+  isEditMode: boolean;
+  openSections: { [key: string]: boolean };
+  onToggleSection: (title: string) => void;
+  forceReload: () => void;
+};
 
 // --- Draggable Subcategory Item ---
-const SortableSubcategory = ({ category, isEditMode, onDeleteClick }: { category: Subcategory, isEditMode: boolean, onDeleteClick: () => void }) => {
+const SortableSubcategory = ({ category, isEditMode, onDeleteClick }: { category: SubcategoryType; isEditMode: boolean; onDeleteClick: () => void }) => {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: category.id });
   const style = { transform: CSS.Transform.toString(transform), transition };
 
@@ -27,7 +32,7 @@ const SortableSubcategory = ({ category, isEditMode, onDeleteClick }: { category
       <Link href={isEditMode ? '#' : `/categories/${category.slug}`} className="group bg-[#1B2A41] p-4 rounded-lg text-center text-gray flex flex-col items-center justify-center gap-3 transition-all duration-300 shadow-lg hover:shadow-gold/20 hover:bg-gold hover:text-navy transform hover:-translate-y-1.5 overflow-hidden">
         {isEditMode && <div {...listeners} className="absolute top-1 right-1 p-1 text-gray-500 cursor-grab" style={{ touchAction: 'none' }}><GripVertical size={16} /></div>}
         <div className="relative text-gold transition-colors duration-300 group-hover:text-navy">
-            {typeof category.icon !== 'string' && <category.icon size={32} />}
+            <DynamicIcon name={category.icon} size={32} />
         </div>
         <span className="text-base font-semibold">{category.name}</span>
       </Link>
@@ -37,7 +42,7 @@ const SortableSubcategory = ({ category, isEditMode, onDeleteClick }: { category
 };
 
 // --- Draggable Category Section ---
-const SortableSection = ({ section, isOpen, toggleSection, isEditMode, onSubcategoriesOrderChange, onAddSubClick, onDeleteCatClick, onDeleteSubClick }: { section: CategorySection; isOpen: boolean; toggleSection: (title: string) => void; isEditMode: boolean; onSubcategoriesOrderChange: (categoryId: number, newOrder: Subcategory[]) => void; onAddSubClick: () => void; onDeleteCatClick: () => void; onDeleteSubClick: (sub: Subcategory) => void; }) => {
+const SortableSection = ({ section, isOpen, toggleSection, isEditMode, onSubcategoriesOrderChange, onAddSubClick, onDeleteCatClick, onDeleteSubClick }: { section: CategorySectionType; isOpen: boolean; toggleSection: (title: string) => void; isEditMode: boolean; onSubcategoriesOrderChange: (categoryId: number, newOrder: SubcategoryType[]) => void; onAddSubClick: () => void; onDeleteCatClick: () => void; onDeleteSubClick: (sub: SubcategoryType) => void; }) => {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: section.id });
   const style = { transform: CSS.Transform.toString(transform), transition };
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
@@ -57,7 +62,9 @@ const SortableSection = ({ section, isOpen, toggleSection, isEditMode, onSubcate
       <TiltCard>
         <div className="relative group">
           <button onClick={() => !isEditMode && toggleSection(section.title)} disabled={isEditMode} className="w-full relative rounded-lg overflow-hidden shadow-xl" style={{ transformStyle: 'preserve-3d' }}>
-            <div className="absolute inset-0 transition-transform duration-500 ease-out group-hover:scale-110" style={{ transform: 'translateZ(8px)' }}><Image src={section.image || ''} alt={section.title} fill className="object-cover" /></div>
+            <div className="absolute inset-0 transition-transform duration-500 ease-out group-hover:scale-110" style={{ transform: 'translateZ(8px)' }}>
+              {section.image && <Image src={section.image} alt={section.title} fill className="object-cover" />}
+            </div>
             <div className="absolute inset-0 bg-gradient-to-r from-navy/90 via-navy/70 to-navy/50"></div>
             <div className="relative w-full p-6 md:p-8 text-center" style={{ transform: 'translateZ(40px)' }}>
                 <h2 className="text-3xl md:text-4xl font-bold text-gold">{section.title}</h2>
@@ -94,23 +101,23 @@ const SortableSection = ({ section, isOpen, toggleSection, isEditMode, onSubcate
 // --- Main CategoryGrid Component ---
 export default function CategoryGrid(props: CategoryGridProps) {
   const { sections: initialSections, isEditMode, openSections, onToggleSection, forceReload } = props;
-  const [sections, setSections] = useState<CategorySection[]>([]);
-// Define a strict type for the modal state to replace 'any'
-type ModalState = 
-  | { type: 'add-cat'; data?: undefined }
-  | { type: 'add-sub'; data: { categoryId: number } }
-  | { type: 'delete-cat'; data: CategorySection }
-  | { type: 'delete-sub'; data: Subcategory }
-  | { type: null; data?: undefined };
+  
+  type ModalState = 
+    | { type: 'add-cat'; data?: undefined }
+    | { type: 'add-sub'; data: { categoryId: number } }
+    | { type: 'delete-cat'; data: CategorySectionType }
+    | { type: 'delete-sub'; data: SubcategoryType }
+    | { type: null; data?: undefined };
 
-const [modalState, setModalState] = useState<ModalState>({ type: null });
+  const [modalState, setModalState] = useState<ModalState>({ type: null });
+  const [sections, setSections] = useState<CategorySectionType[]>(initialSections);
+
   useEffect(() => {
-    setSections(initialSections.filter((s): s is CategorySection => !!s));
+    setSections(initialSections);
   }, [initialSections]);
-
+  
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 10 } }));
 
-  // --- API Handlers ---
   const handleSaveCategory = async (data: CategoryData) => {
     const method = data.id ? 'PUT' : 'POST';
     await fetch('/api/categories', { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
@@ -126,7 +133,7 @@ const [modalState, setModalState] = useState<ModalState>({ type: null });
   };
   
   const handleDelete = async () => {
-if (!modalState.data || !('id' in modalState.data)) return;
+    if (!modalState.data || !('id' in modalState.data)) return;
     const { type, data } = modalState;
     const table = type === 'delete-cat' ? 'categories' : 'subcategories';
     
@@ -136,7 +143,7 @@ if (!modalState.data || !('id' in modalState.data)) return;
     forceReload();
   };
 
-  const handleSubcategoriesOrderChange = (categoryId: number, newOrder: Subcategory[]) => {
+  const handleSubcategoriesOrderChange = (categoryId: number, newOrder: SubcategoryType[]) => {
     setSections(prevSections => prevSections.map(section => section.id === categoryId ? { ...section, categories: newOrder } : section));
     fetch('/api/reorder', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ table: 'subcategories', items: newOrder }) });
   };
@@ -163,11 +170,11 @@ if (!modalState.data || !('id' in modalState.data)) return;
       <div className="container mx-auto px-4">
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleSectionsDragEnd}>
           <SortableContext items={sections.map(s => s.id)} strategy={verticalListSortingStrategy}>
-            {sections.map((section) => (
+            {sections.map((section: CategorySectionType) => (
               <SortableSection 
                   key={section.id} 
                   section={section} 
-                  isOpen={openSections ? openSections[section.title] : true} 
+                  isOpen={openSections?.[section.title] ?? false} 
                   toggleSection={onToggleSection || (() => {})} 
                   isEditMode={isEditMode}
                   onSubcategoriesOrderChange={handleSubcategoriesOrderChange}

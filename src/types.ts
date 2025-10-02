@@ -18,7 +18,7 @@ export type Subcategory = {
   id: number;
   name: string;
   slug: string;
-  icon: LucideIcon | string; // Allow string for icon name from DB, LucideIcon for component
+  icon: string; // The name of the lucide icon, e.g., "UtensilsCrossed"
   category_id: number;
 };
 
@@ -31,6 +31,8 @@ export type CategorySection = {
   description: string | null;
   categories: Subcategory[];
 };
+
+
 
 
 // --- Shared Business & Product Types ---

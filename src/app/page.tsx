@@ -5,7 +5,7 @@ import CategoryGrid from '@/components/CategoryGrid';
 import { useAuth } from '@/context/AuthContext';
 import { useLocation } from '@/context/LocationContext';
 import { useChat } from '@/context/ChatContext';
-import { Bot, Search, MessageSquare, ChevronLeft, type LucideIcon, Edit, UtensilsCrossed, Coffee, Cake, CookingPot, Truck, Beef, ShoppingBasket, PartyPopper, Stethoscope, Hospital, Pill, Dna, Bot as BotIcon, Scale, Handshake, HeartPulse, Sparkles, Droplet, Scissors, Paintbrush, SprayCan, PersonStanding, Diamond, HardHat, Wrench, Zap, Hammer, PaintRoller, Ruler, Bug, Car, CarTaxiFront, HandCoins, Settings2, Landmark, Calculator, DraftingCompass, Users, Megaphone, Code, PenTool, ShoppingCart, Shirt, Laptop, Sofa, Gift, BookOpen, ToyBrick, Dumbbell, Camera, Music, Clapperboard, Palette, GraduationCap, School, BookUser, Library, Languages, Cat, Watch, Cross, Dog, Bone, Bird, Gamepad2, KeyRound, Factory, Printer, Sprout, Leaf, Recycle, Tractor, TriangleAlert, Bike, Sailboat, ParkingCircle, Building, Brush, Gem, Drama, ClipboardList , Flower, Mail, ShieldCheck, TrendingUp, House, Repeat, Hotel, Plane, Map, Ticket, Stamp,Warehouse } from 'lucide-react';
+import { Bot, Search, MessageSquare, ChevronLeft, Edit, UtensilsCrossed } from 'lucide-react';
 import { motion, Variants } from 'framer-motion';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
@@ -15,7 +15,7 @@ type Subcategory = {
   id: number;
   name: string;
   slug: string;
-  icon: LucideIcon | string; // Allow string for icon name from DB
+  icon: string;
   category_id: number;
 };
 
@@ -28,22 +28,6 @@ type CategorySection = {
   image: string | null;
   categories: Subcategory[];
 };
-
-
-const iconMap: { [key: string]: LucideIcon } = {
-  UtensilsCrossed, Coffee, Cake, CookingPot, Truck, Beef, ShoppingBasket, PartyPopper,
-  Stethoscope, Hospital, Pill, Dna, Bot: BotIcon, Scale, Handshake, HeartPulse, Sparkles, Droplet,
-  Scissors, Paintbrush, SprayCan, PersonStanding, Diamond,
-  HardHat, Wrench, Zap, Hammer, PaintRoller, Ruler, Bug, Car, CarTaxiFront,
-  HandCoins, Settings2, Landmark, Calculator, DraftingCompass, Users,
-  Megaphone, Code, PenTool, ShoppingCart, Shirt, Laptop, Sofa, Gift, BookOpen,
-  ToyBrick, Dumbbell, Camera, Music, Clapperboard, Palette,
-  GraduationCap, School, BookUser, Library, Languages, Cat, Watch, Cross,
-  Dog, Bone, Bird, Gamepad2, KeyRound, Factory, Printer, Sprout, Leaf, Recycle, Tractor,
-  TriangleAlert, Bike, Sailboat, ParkingCircle, Building, Brush, Gem, Drama,
-  ClipboardList , Flower, Mail, ShieldCheck, TrendingUp, House, Repeat, Hotel, Plane, Map, Ticket, Stamp,Warehouse,
-};
-
 
 export default function Home() {
   const { user } = useAuth();
@@ -71,12 +55,7 @@ export default function Home() {
     const sections: CategorySection[] = categories.map(category => ({
       ...category,
       title: category.name,
-      categories: subcategories
-        .filter(sub => sub.category_id === category.id)
-        .map(sub => ({ 
-          ...sub, 
-          icon: iconMap[sub.icon as string] || UtensilsCrossed 
-        }))
+      categories: subcategories.filter(sub => sub.category_id === category.id)
     }));
 
     setCategorySections(sections);
