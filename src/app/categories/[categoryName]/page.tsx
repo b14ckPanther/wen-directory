@@ -10,18 +10,17 @@ import { Map, Edit, PlusCircle, AlertTriangle, ChevronsRight, SlidersHorizontal,
 import { Business, Subcategory } from '@/types';
 import Loader from '@/components/Loader';
 import { useAuth } from '@/context/AuthContext';
-import { motion, AnimatePresence, useMotionValue, PanInfo } from 'framer-motion';
+import { motion, AnimatePresence, PanInfo } from 'framer-motion';
 import BusinessFormModal from '@/components/BusinessFormModal';
 import { supabase } from '@/lib/supabase';
 import DynamicIcon from '@/components/DynamicIcon';
 
 type ParentCategory = { id: number; name: string; slug: string; };
 
-// --- NEW DRAGGABLE 3D CAROUSEL COMPONENT ---
+// --- CORRECTED Draggable 3D Carousel Component ---
 const CategoryCarousel = ({ subcategories, activeSlug, parentCategory }: { subcategories: Subcategory[], activeSlug: string | undefined, parentCategory: ParentCategory | null }) => {
     const [activeIndex, setActiveIndex] = useState(0);
-    const dragX = useMotionValue(0);
-    const containerRef = useRef<HTMLDivElement>(null);
+    const router = useRouter();
 
     useEffect(() => {
         const foundIndex = subcategories.findIndex(s => s.slug === activeSlug);
@@ -29,25 +28,14 @@ const CategoryCarousel = ({ subcategories, activeSlug, parentCategory }: { subca
     }, [activeSlug, subcategories]);
 
     const onDragEnd = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
-        const itemWidth = 110;
-        const velocityThreshold = 500;
-        const offsetThreshold = itemWidth / 2;
+        const { offset } = info;
+        const dragThreshold = 70; // Swipe sensitivity
 
-        if (Math.abs(info.velocity.x) > velocityThreshold) {
-            const direction = info.velocity.x > 0 ? -1 : 1;
-            setActiveIndex(prev => Math.max(0, Math.min(subcategories.length - 1, prev + direction)));
-        } else if (Math.abs(info.offset.x) > offsetThreshold) {
-            const direction = info.offset.x > 0 ? -1 : 1;
-            setActiveIndex(prev => Math.max(0, Math.min(subcategories.length - 1, prev + direction)));
+        if (offset.x > dragThreshold) { // Swiped right
+            setActiveIndex(i => Math.max(0, i - 1));
+        } else if (offset.x < -dragThreshold) { // Swiped left
+            setActiveIndex(i => Math.min(subcategories.length - 1, i + 1));
         }
-    };
-
-    const getStyle = (index: number) => {
-        const distance = Math.abs(activeIndex - index);
-        const scale = Math.max(1 - distance * 0.25, 0.4);
-        const opacity = Math.max(1 - distance * 0.35, 0.2);
-        const zIndex = subcategories.length - distance;
-        return { scale, opacity, zIndex };
     };
 
     return (
@@ -57,7 +45,7 @@ const CategoryCarousel = ({ subcategories, activeSlug, parentCategory }: { subca
                     initial={{ opacity: 0, y: -20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2 }}
-                    className="flex justify-center items-center gap-2 text-sm text-gold/70 mb-4 z-20"
+                    className="flex justify-center items-center gap-2 text-sm text-gold/70 mb-4 z-30"
                 >
                     <Link href="/categories" className="hover:text-gold transition-colors">كل الفئات</Link>
                     <ChevronsRight size={16} />
@@ -65,27 +53,43 @@ const CategoryCarousel = ({ subcategories, activeSlug, parentCategory }: { subca
                 </motion.nav>
             )}
             
-        <motion.div 
-    ref={containerRef}
-    drag="x" 
-    dragConstraints={{ left: -(subcategories.length - 1) * 110, right: 0 }}
-    onDragEnd={onDragEnd}
-    style={{ x: dragX, perspective: "1200px" }}
-    className="relative w-full h-56 flex items-center justify-center cursor-grab active:cursor-grabbing"
->
-                {subcategories.map((sub, index) => {
-                    const { scale, opacity, zIndex } = getStyle(index);
-                    const position = (index - activeIndex) * 110;
+            <motion.div
+                drag="x"
+                dragConstraints={{ left: 0, right: 0 }}
+                dragElastic={0.2}
+                onDragEnd={onDragEnd}
+                className="relative w-full h-56 flex items-center justify-center cursor-grab active:cursor-grabbing"
+            >
+                <AnimatePresence initial={false}>
+                    {subcategories.map((sub, index) => {
+                        const distance = index - activeIndex;
+                        const isVisible = Math.abs(distance) <= 2;
 
-                    return (
-                        <motion.div
-                            key={sub.id}
-                            animate={{ x: `${position}%`, scale, opacity }}
-                            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                            style={{ zIndex, position: 'absolute' }}
-                        >
-                            <Link href={`/categories/${sub.slug}`} scroll={false} draggable="false">
+                        if (!isVisible) return null;
+
+                        return (
+                            <motion.div
+                                key={sub.id}
+                                className="absolute"
+                                style={{ pointerEvents: 'none' }} // Make the container transparent to drag events
+                                initial={{
+                                    x: `${distance * 55}%`,
+                                    scale: 1 - Math.abs(distance) * 0.25,
+                                    opacity: 1 - Math.abs(distance) * 0.4,
+                                    zIndex: subcategories.length - Math.abs(distance)
+                                }}
+                                animate={{
+                                    x: `${distance * 55}%`,
+                                    scale: 1 - Math.abs(distance) * 0.25,
+                                    opacity: 1 - Math.abs(distance) * 0.4,
+                                    zIndex: subcategories.length - Math.abs(distance)
+                                }}
+                                transition={{ type: 'spring', stiffness: 350, damping: 35 }}
+                                exit={{ opacity: 0, scale: 0.5 }}
+                            >
                                 <motion.div
+                                    style={{ pointerEvents: 'auto' }} // Re-enable pointer events on the clickable element
+                                    onTap={() => router.push(`/categories/${sub.slug}`)}
                                     whileTap={{ scale: 0.95 }}
                                     className={`flex flex-col items-center justify-center w-32 h-32 rounded-full transition-all duration-300
                                     ${sub.slug === activeSlug 
@@ -96,10 +100,10 @@ const CategoryCarousel = ({ subcategories, activeSlug, parentCategory }: { subca
                                     <DynamicIcon name={sub.icon || 'HelpCircle'} size={32} className={sub.slug === activeSlug ? 'text-navy' : 'text-gold/80'} />
                                     <span className={`font-bold text-center text-sm mt-2 ${sub.slug === activeSlug ? 'text-navy' : 'text-gray-300'}`}>{sub.name}</span>
                                 </motion.div>
-                            </Link>
-                        </motion.div>
-                    );
-                })}
+                            </motion.div>
+                        );
+                    })}
+                </AnimatePresence>
             </motion.div>
         </div>
     );
@@ -278,4 +282,3 @@ export default function CategoryResultsPage() {
         </>
     );
 }
-
