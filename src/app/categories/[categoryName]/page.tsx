@@ -6,7 +6,7 @@ import Link from 'next/link';
 import BusinessCard from '@/components/BusinessCard';
 import FilterModal from '@/components/FilterModal';
 import BusinessDetailModal from '@/components/BusinessDetailModal';
-import { Map, Edit, PlusCircle, AlertTriangle, ChevronsRight, SlidersHorizontal, ArrowDownUp, ListTree, ChevronDown } from 'lucide-react';
+import { Map, Edit, PlusCircle, AlertTriangle, ChevronsRight, SlidersHorizontal, ArrowDownUp, ListTree, ChevronDown, Info } from 'lucide-react';
 import { Business, Subcategory } from '@/types';
 import Loader from '@/components/Loader';
 import { useAuth } from '@/context/AuthContext';
@@ -126,6 +126,21 @@ const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm, businessName }: {
     );
 };
 
+const InfoModal = ({ isOpen, onClose, message }: { isOpen: boolean; onClose: () => void; message: string; }) => {
+    if (!isOpen) return null;
+    return (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-navy/80 backdrop-blur-sm z-[101] flex items-center justify-center p-4">
+            <motion.div initial={{ scale: 0.9, y: -20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }} className="bg-[#1B2A41] w-full max-w-sm rounded-2xl p-6 border border-gold/20 text-center">
+                <Info size={48} className="mx-auto text-gold mb-4" />
+                <p className="text-gray-300 mb-6 text-lg">{message}</p>
+                <button onClick={onClose} className="bg-gold text-navy font-bold py-2 px-8 rounded-lg hover:bg-yellow-300 transition-colors">
+                    حسنًا
+                </button>
+            </motion.div>
+        </motion.div>
+    );
+};
+
 const SimplifiedFilterControls = ({ onOpenFilterModal, onSortClick, subcategories, activeSlug, parentCategoryName }: { onOpenFilterModal: () => void; onSortClick: () => void; subcategories: Subcategory[]; activeSlug: string | undefined; parentCategoryName: string | null; }) => {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
@@ -178,6 +193,7 @@ export default function CategoryResultsPage() {
     const [siblingSubcategories, setSiblingSubcategories] = useState<Subcategory[]>([]);
     const [loading, setLoading] = useState(true);
     const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+    const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
     const [selectedBusiness, setSelectedBusiness] = useState<Business | null>(null);
     const [isEditMode, setIsEditMode] = useState(false);
     const [isFormModalOpen, setIsFormModalOpen] = useState(false);
@@ -231,6 +247,8 @@ export default function CategoryResultsPage() {
         <>
             <FilterModal isOpen={isFilterModalOpen} onClose={() => setIsFilterModalOpen(false)} />
             <BusinessDetailModal business={selectedBusiness} onClose={() => setSelectedBusiness(null)} />
+            <InfoModal isOpen={isInfoModalOpen} onClose={() => setIsInfoModalOpen(false)} message="سيتم إضافة ميزة الترتيب قريبًا!" />
+            
             {user?.role === 'admin' && (
                 <>
                     <BusinessFormModal isOpen={isFormModalOpen} onClose={() => setIsFormModalOpen(false)} onSave={fetchData} business={editingBusiness} initialSubcategoryId={subcategory?.id} />
@@ -254,7 +272,7 @@ export default function CategoryResultsPage() {
                 <section className="bg-[#0A1024] border-y border-gold/10 sticky top-[80px] z-20 backdrop-blur-sm">
                      <SimplifiedFilterControls 
                         onOpenFilterModal={() => setIsFilterModalOpen(true)}
-                        onSortClick={() => { alert('سيتم إضافة ميزة الترتيب قريباً!'); }}
+                        onSortClick={() => setIsInfoModalOpen(true)}
                         subcategories={siblingSubcategories}
                         activeSlug={subcategory?.slug}
                         parentCategoryName={parentCategory?.name || null}
