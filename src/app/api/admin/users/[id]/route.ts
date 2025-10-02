@@ -1,9 +1,13 @@
 // src/app/api/admin/users/[id]/route.ts
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { NextResponse, NextRequest } from 'next/server';
+// import { createClient, SupabaseClient } from '@supabase/supabase-js';
+// import { NextResponse, NextRequest } from 'next/server';
 
 // NOTE: The PUT and DELETE functions are commented out to allow the project to build.
 // Restoring this functionality will require fixing the TypeScript type error.
+
+export async function GET() {
+  return Response.json({ message: "Admin user route is disabled for now." });
+}
 
 /*
 // Helper function for admin check

@@ -41,9 +41,10 @@ export default function RegisterPage() {
       } else {
         setStatus({ type: 'error', message: result.message || 'حدث خطأ أثناء إرسال طلبك.' });
       }
-    } catch (error) {
-      setStatus({ type: 'error', message: 'حدث خطأ في الشبكة. يرجى المحاولة مرة أخرى.' });
-    } finally {
+   } catch {
+  setStatus({ type: 'error', message: 'حدث خطأ في الشبكة. يرجى المحاولة مرة أخرى.' });
+}
+ finally {
       setLoading(false);
     }
   };

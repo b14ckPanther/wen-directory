@@ -73,7 +73,10 @@ const UserModal = ({ isOpen, onClose, businesses, onUserAddedOrUpdated, editingU
             onUserAddedOrUpdated();
             setTimeout(onClose, 1500);
         } else { setError(data.message || 'An unexpected error occurred.'); }
-    } catch (err) { setError('A network error occurred.'); } 
+ } catch { 
+  setError('A network error occurred.'); 
+}
+
     finally { setIsSubmitting(false); }
   };
 
