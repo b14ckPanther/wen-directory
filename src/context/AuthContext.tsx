@@ -67,9 +67,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setUser({ name: profile.name, role: profile.role as User['role'] });
 
             if (event === 'SIGNED_IN') {
-              if (profile.role === 'admin') router.push('/dashboard/admin');
-              else if (profile.role === 'owner') router.push('/dashboard/owner');
-              else router.push('/');
+              router.push('/');
             }
           } catch (e) {
              console.error("AuthContext: Failed to fetch profile on auth change.", e);
@@ -90,7 +88,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await supabase.auth.signOut();
     setUser(null);
     setSession(null);
-    router.replace('/login'); 
+    window.location.href = '/login';
   };
 
   return (
