@@ -4,7 +4,6 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import BusinessCard from '@/components/BusinessCard';
-import FilterModal from '@/components/FilterModal';
 import BusinessDetailModal from '@/components/BusinessDetailModal';
 import { Map, Edit, PlusCircle, AlertTriangle, ChevronsRight, SlidersHorizontal, ArrowDownUp, ListTree, ChevronDown, Info } from 'lucide-react';
 import { Business, Subcategory } from '@/types';
@@ -154,7 +153,7 @@ const SimplifiedFilterControls = ({ onOpenFilterModal, onSortClick, subcategorie
             <div className="relative" ref={dropdownRef}>
                 <motion.button onClick={() => setIsDropdownOpen(prev => !prev)} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} whileHover={{ y: -3, scale: 1.05, boxShadow: "0 0 15px hsl(0 0% 100% / 0.1)" }} className="flex items-center gap-2 px-6 py-2 text-sm font-semibold rounded-full transition-all duration-300 text-gray-300 bg-[#1B2A41]/50 border border-gray-700">
                     <ListTree size={16} />
-                    <span>الفئات الفرعية</span>
+                    <span>الفئات</span>
                     <ChevronDown size={16} className={`transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
                 </motion.button>
                 <AnimatePresence>
