@@ -9,7 +9,7 @@ import type { Session } from '@supabase/supabase-js';
 type AuthContextType = {
   user: User | null;
   session: Session | null;
-  logout: () => void;
+  logout: () => Promise<void>;
   loading: boolean;
 };
 
@@ -59,8 +59,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, currentSession) => {
-        setSession(currentSession);
-        
+        // On SIGNED_OUT, redirect immediately
+        if (event === 'SIGNED_OUT') {
+          setUser(null);
+          setSession(null);
+          window.location.href = '/login';
+          return;
+        }
+
         if (currentSession?.user) {
           try {
             const profile = await fetchUserProfile(currentSession.user.id, currentSession.user.email);
@@ -75,6 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
         } else {
           setUser(null);
+          setSession(null);
         }
       }
     );
@@ -86,8 +93,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     await supabase.auth.signOut();
-    setUser(null);
-    setSession(null);
+    // The onAuthStateChange listener will handle the redirect and state clearing.
+    // As a fallback for any race conditions, we'll force it.
     window.location.href = '/login';
   };
 

@@ -4,16 +4,15 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Edit, Trash2, PlusCircle, ChevronDown, Image as ImageIcon, Loader, AlertTriangle, CheckCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/context/AuthContext'; // Import useAuth
 
 // --- Types ---
 type Subcategory = { id: number; name: string; slug: string; category_id: number; };
 type CategorySection = { id: number; name: string; slug: string; description?: string; image?: string; subcategories: Subcategory[]; };
 
-// ✅ NEW: Specific types for form data to be saved
 type CategoryData = { id?: number; name: string; slug: string; };
 type SubcategoryData = { id?: number; name: string; slug: string; category_id: number; };
 
-// ✅ FIX: Replaced `any` with a discriminated union for type safety
 type AddCatModalState = { mode: 'add-cat'; data?: undefined };
 type EditCatModalState = { mode: 'edit-cat'; data: CategorySection };
 type AddSubModalState = { mode: 'add-sub'; data: { category_id: number } };
@@ -91,6 +90,7 @@ const ConfirmationModal = ({ deleteState, onClose, onConfirm }: { deleteState: D
 
 // --- Page ---
 export default function ManageCategoriesPage() {
+    const { session } = useAuth();
     const [categorySections, setCategorySections] = useState<CategorySection[]>([]);
     const [loading, setLoading] = useState(true);
     const [openSection, setOpenSection] = useState<number | null>(null);
@@ -99,6 +99,11 @@ export default function ManageCategoriesPage() {
     const [pageMessage, setPageMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
     const fetchCategories = useCallback(async () => {
+        if (!session) {
+            setLoading(false);
+            return;
+        }
+
         setLoading(true);
         const { data: categories, error: catError } = await supabase.from('categories').select('*').order('name', { ascending: true });
         const { data: subcategories, error: subError } = await supabase.from('subcategories').select('*').order('name', { ascending: true });
@@ -106,9 +111,11 @@ export default function ManageCategoriesPage() {
         const combinedData: CategorySection[] = categories.map(cat => ({ ...cat, subcategories: subcategories.filter(sub => sub.category_id === cat.id) }));
         setCategorySections(combinedData);
         setLoading(false);
-    }, []);
+    }, [session]);
 
-    useEffect(() => { fetchCategories(); }, [fetchCategories]);
+    useEffect(() => {
+        fetchCategories();
+    }, [fetchCategories]);
 
     const handleSave = async (data: CategoryData | SubcategoryData) => {
         const isSub = modalState.mode === 'add-sub' || modalState.mode === 'edit-sub';
