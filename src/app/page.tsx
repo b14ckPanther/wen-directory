@@ -5,29 +5,36 @@ import CategoryGrid from '@/components/CategoryGrid';
 import { useAuth } from '@/context/AuthContext';
 import { useLocation } from '@/context/LocationContext';
 import { useChat } from '@/context/ChatContext';
-import { Bot, Search, MessageSquare, ChevronLeft, Edit } from 'lucide-react';
+import { Bot, Search, MessageSquare, ChevronLeft, Edit, ListOrdered } from 'lucide-react';
 import { motion, Variants } from 'framer-motion';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import type { CategorySection } from '@/types';
+import { ManageHomepageModal } from '@/components/modals/ManageHomepageModal';
 
 export default function Home() {
   const { user } = useAuth();
   const [isEditMode, setIsEditMode] = useState(false);
   const { selectedLocation, openLocationModal } = useLocation();
   const { toggleChat } = useChat();
-  const [categorySections, setCategorySections] = useState<CategorySection[]>([]);
+
+  const [allCategorySections, setAllCategorySections] = useState<CategorySection[]>([]);
+  const [popularCategoryIds, setPopularCategoryIds] = useState<number[]>([]);
+  const [popularCategories, setPopularCategories] = useState<CategorySection[]>([]);
   
   const [openSections, setOpenSections] = useState<{ [key: string]: boolean }>({});
   const [preEditOpenSections, setPreEditOpenSections] = useState<{ [key: string]: boolean }>({});
   
   const [placeholder, setPlaceholder] = useState('');
+  const [isManageModalOpen, setIsManageModalOpen] = useState(false);
+
   const searchSuggestions = useMemo(() => ["على شو بتدوّر؟", "مطاعم...", "أطباء...", "محامون...", "صالونات..."], []);
 
-  const fetchCategories = useCallback(async () => {
+  const fetchAllData = useCallback(async () => {
+    // Fetch all categories with their subcategories
     const { data: categories, error: catError } = await supabase.from('categories').select('*').order('position');
     const { data: subcategories, error: subError } = await supabase.from('subcategories').select('*').order('position');
-
+    
     if (catError || subError) {
       console.error(catError || subError);
       return;
@@ -38,21 +45,42 @@ export default function Home() {
       title: category.name,
       categories: subcategories.filter(sub => sub.category_id === category.id)
     }));
+    setAllCategorySections(sections);
 
-    setCategorySections(sections);
+    // Fetch the configuration for homepage categories
+    try {
+      const response = await fetch('/api/homepage-categories');
+      if (!response.ok) throw new Error('Failed to fetch homepage config');
+      const ids: number[] = await response.json();
+      setPopularCategoryIds(ids);
+    } catch (error) {
+        console.error(error);
+        setPopularCategoryIds([]); // Fallback to empty if API fails
+    }
   }, []);
   
   useEffect(() => {
-    fetchCategories();
-  }, [fetchCategories]);
+    fetchAllData();
+  }, [fetchAllData]);
 
-  const popularCategories = useMemo(() => [
-    categorySections.find(s => s.slug === 'طعام'),
-    categorySections.find(s => s.slug === 'صحة'),
-    categorySections.find(s => s.slug === 'جمال'),
-    categorySections.find(s => s.slug === 'منزل-وبناء'),
-    categorySections.find(s => s.slug === 'تسوق'),
-  ].filter((c): c is CategorySection => !!c), [categorySections]);
+  // This effect derives the `popularCategories` state from the fetched data
+  useEffect(() => {
+    if (popularCategoryIds.length > 0 && allCategorySections.length > 0) {
+        const idToCategoryMap = new Map(allCategorySections.map(cat => [cat.id, cat]));
+        const orderedPopular = popularCategoryIds
+            .map(id => idToCategoryMap.get(id))
+            .filter((c): c is CategorySection => !!c); // Filter out any undefined results
+        setPopularCategories(orderedPopular);
+    } else if (allCategorySections.length > 0) {
+        // Provide a default fallback if no homepage categories are set in the database
+        const fallbackSlugs = ['طعام', 'صحة', 'جمال', 'منزل-وبناء', 'تسوق'];
+        setPopularCategories(
+            allCategorySections
+              .filter(s => fallbackSlugs.includes(s.slug))
+              .slice(0, 5) // Ensure there's a limit
+        );
+    }
+  }, [popularCategoryIds, allCategorySections]);
   
   const handleToggleSection = (title: string) => {
     if (isEditMode) return;
@@ -70,11 +98,13 @@ export default function Home() {
           setOpenSections(allOpen);
       } else {
           setOpenSections(preEditOpenSections);
+          setIsManageModalOpen(false);
       }
   };
 
   const forceReload = () => {
-      fetchCategories();
+      fetchAllData();
+      setIsManageModalOpen(false);
   };
 
   useEffect(() => {
@@ -125,6 +155,14 @@ export default function Home() {
 
   return (
     <>
+      <ManageHomepageModal
+        isOpen={isManageModalOpen}
+        onClose={() => setIsManageModalOpen(false)}
+        onSave={forceReload}
+        allCategories={allCategorySections}
+        currentHomepageCategories={popularCategories}
+      />
+
       <section className="relative w-full text-center py-20 md:py-32 bg-navy overflow-hidden">
         <div className="absolute inset-0 z-0 animate-star-field pointer-events-none"></div>
         <motion.div
@@ -156,10 +194,10 @@ export default function Home() {
           </motion.div>
           
           {user?.role === 'admin' && (
-            <motion.div className="mt-8" variants={itemVariants}>
+            <motion.div className="mt-8 flex flex-wrap justify-center gap-4" variants={itemVariants}>
               <button
                 onClick={() => handleSetEditMode(!isEditMode)}
-                className={`flex items-center gap-2 mx-auto px-6 py-2 font-semibold rounded-full transition-colors ${
+                className={`flex items-center gap-2 px-6 py-2 font-semibold rounded-full transition-colors ${
                   isEditMode
                     ? 'bg-red-500/20 text-red-300 border border-red-500/50'
                     : 'bg-gold/10 text-gold border border-gold/50'
@@ -168,6 +206,15 @@ export default function Home() {
                 <Edit size={18} />
                 {isEditMode ? 'Finish Editing' : 'Edit Page'}
               </button>
+              {isEditMode && (
+                 <button
+                    onClick={() => setIsManageModalOpen(true)}
+                    className="flex items-center gap-2 px-6 py-2 font-semibold rounded-full bg-blue-500/10 text-blue-300 border border-blue-500/50"
+                  >
+                    <ListOrdered size={18} />
+                    Manage Homepage
+                  </button>
+              )}
             </motion.div>
           )}
 

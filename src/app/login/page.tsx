@@ -1,8 +1,9 @@
 'use client';
 import Link from 'next/link';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation'; // Import the router
 import { motion, AnimatePresence, Variants } from 'framer-motion';
-import { User, Lock, LogIn, ArrowLeft, AlertCircle } from 'lucide-react'; // Import AlertCircle
+import { User, Lock, LogIn, ArrowLeft, AlertCircle } from 'lucide-react';
 import TiltCard from '@/components/TiltCard';
 import { supabase } from '@/lib/supabase';
 
@@ -10,12 +11,13 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null); // State for the error message
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter(); // Initialize the router
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError(null); // Clear previous errors on a new attempt
+    setError(null);
 
     const { error: authError } = await supabase.auth.signInWithPassword({
       email: email,
@@ -25,13 +27,14 @@ export default function LoginPage() {
     setLoading(false);
 
     if (authError) {
-      // Set the error message in state instead of using alert()
       setError('البريد الإلكتروني أو كلمة المرور غير صحيحة.');
+    } else {
+      // ✅ FIX: On successful login, redirect the user and refresh the page state.
+      router.push('/');
+      router.refresh(); 
     }
-    // No 'else' is needed, the AuthContext handles success.
   };
 
-  // ... containerVariants and itemVariants are unchanged ...
   const containerVariants: Variants = {
     hidden: { opacity: 0 },
     visible: { opacity: 1, transition: { staggerChildren: 0.2, delayChildren: 0.3 } },
@@ -72,7 +75,6 @@ export default function LoginPage() {
               </motion.div>
 
               <motion.form variants={itemVariants} onSubmit={handleLogin} className="space-y-5">
-                {/* NEW: Error Message Display */}
                 <AnimatePresence>
                   {error && (
                     <motion.div
@@ -125,4 +127,3 @@ export default function LoginPage() {
     </div>
   );
 }
-

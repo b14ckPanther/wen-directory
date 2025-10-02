@@ -21,7 +21,7 @@ async function fetchUserProfile(userId: string, userEmail?: string): Promise<{ r
         .select('role, username')
         .eq('id', userId)
         .single();
-        
+
     const emailUsername = userEmail?.split('@')[0] || 'User';
 
     if (error || !data) {
@@ -36,14 +36,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const router = useRouter();
   const inactivityTimer = useRef<NodeJS.Timeout | null>(null);
 
-
+  // ✅ FIX: Force a full page reload on logout to clear all stale state.
   const logout = useCallback(async () => {
-    await supabase.auth.signOut();
-    router.push('/');
-  }, [router]);
+    console.log('Force logging out...');
+    await supabase.auth.signOut().catch(error => {
+      // We catch the "Auth session missing!" error but proceed anyway,
+      // as the goal is to reset the client state.
+      console.warn('Supabase signOut error (ignoring):', error.message);
+    });
+    
+    // This is a more forceful redirect that clears all application state.
+    window.location.assign('/');
+  }, []);
 
   const resetInactivityTimer = useCallback(() => {
     if (inactivityTimer.current) {
@@ -51,6 +57,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     inactivityTimer.current = setTimeout(() => {
         if (user?.role === 'admin') {
+            console.log('Admin inactivity timer triggered. Logging out.');
             logout();
         }
     }, 5 * 60 * 1000); // 5 minutes
@@ -58,12 +65,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (user?.role === 'admin') {
-      const events = ['mousemove', 'keydown', 'scroll', 'click'];
-      
+      const events: (keyof WindowEventMap)[] = ['mousemove', 'keydown', 'scroll', 'click'];
       const resetTimer = () => resetInactivityTimer();
 
       events.forEach(event => window.addEventListener(event, resetTimer));
-      resetInactivityTimer(); // Initial timer start
+      resetInactivityTimer();
 
       return () => {
         events.forEach(event => window.removeEventListener(event, resetTimer));
@@ -74,58 +80,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [user, resetInactivityTimer]);
 
-
   useEffect(() => {
-    const initializeSession = async () => {
-      const { data: { session: initialSession } } = await supabase.auth.getSession();
-      
-      if (initialSession) {
-        setSession(initialSession);
-        try {
-            const profile = await fetchUserProfile(initialSession.user.id, initialSession.user.email);
-            setUser({ name: profile.name, role: profile.role as User['role'] });
-        } catch (e) {
-            console.error("AuthContext: Failed to fetch profile on initial load.", e);
-            setUser(null);
-        }
-      }
-      setLoading(false);
-    };
-
-    initializeSession();
-
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, currentSession) => {
-        if (event === 'SIGNED_OUT') {
-          setUser(null);
-          setSession(null);
-          router.push('/'); // Redirect to the home screen
-          return;
-        }
-
+      async (_event, currentSession) => {
         if (currentSession?.user) {
-          try {
-            const profile = await fetchUserProfile(currentSession.user.id, currentSession.user.email);
-            setUser({ name: profile.name, role: profile.role as User['role'] });
-
-            if (event === 'SIGNED_IN') {
-              router.push('/');
-            }
-          } catch (e) {
-             console.error("AuthContext: Failed to fetch profile on auth change.", e);
-             setUser(null);
-          }
+          const profile = await fetchUserProfile(currentSession.user.id, currentSession.user.email);
+          setUser({ name: profile.name, role: profile.role as User['role'] });
+          setSession(currentSession);
         } else {
           setUser(null);
           setSession(null);
         }
+        setLoading(false);
       }
     );
 
     return () => {
       subscription?.unsubscribe();
     };
-  }, [router]);
+  }, []);
+
 
   return (
     <AuthContext.Provider value={{ user, session, logout, loading }}>
