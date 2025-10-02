@@ -5,29 +5,11 @@ import CategoryGrid from '@/components/CategoryGrid';
 import { useAuth } from '@/context/AuthContext';
 import { useLocation } from '@/context/LocationContext';
 import { useChat } from '@/context/ChatContext';
-import { Bot, Search, MessageSquare, ChevronLeft, Edit, UtensilsCrossed } from 'lucide-react';
+import { Bot, Search, MessageSquare, ChevronLeft, Edit } from 'lucide-react';
 import { motion, Variants } from 'framer-motion';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
-
-// --- Define specific types for our data structure ---
-type Subcategory = {
-  id: number;
-  name: string;
-  slug: string;
-  icon: string;
-  category_id: number;
-};
-
-type CategorySection = {
-  id: number;
-  name: string;
-  title: string;
-  description: string | null;
-  slug: string;
-  image: string | null;
-  categories: Subcategory[];
-};
+import type { CategorySection } from '@/types';
 
 export default function Home() {
   const { user } = useAuth();
@@ -36,7 +18,6 @@ export default function Home() {
   const { toggleChat } = useChat();
   const [categorySections, setCategorySections] = useState<CategorySection[]>([]);
   
-  // State to manage which accordions are open
   const [openSections, setOpenSections] = useState<{ [key: string]: boolean }>({});
   const [preEditOpenSections, setPreEditOpenSections] = useState<{ [key: string]: boolean }>({});
   
