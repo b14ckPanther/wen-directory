@@ -1,5 +1,3 @@
-// src/types.ts
-import { type LucideIcon } from 'lucide-react';
 
 // --- Shared User & Auth Types ---
 export type UserRole = 'admin' | 'owner' | 'user';

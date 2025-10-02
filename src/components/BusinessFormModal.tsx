@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, Suspense, ChangeEvent } from 'react';
+import React, { useState, useEffect, ChangeEvent } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Building, Tag, Layers, DollarSign, Phone, X, AlertCircle, CheckCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';

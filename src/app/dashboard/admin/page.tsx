@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DollarSign, Briefcase, UserPlus, Clock, LucideIcon, CheckCircle, AlertCircle } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { Business } from '@/types';
 

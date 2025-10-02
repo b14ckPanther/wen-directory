@@ -10,7 +10,7 @@ import { Map, Edit, PlusCircle, AlertTriangle } from 'lucide-react';
 import { Business } from '@/types';
 import Loader from '@/components/Loader';
 import { useAuth } from '@/context/AuthContext';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import BusinessFormModal from '@/components/BusinessFormModal'; // <-- IMPORT THE NEW MODAL
 import { supabase } from '@/lib/supabase';
 

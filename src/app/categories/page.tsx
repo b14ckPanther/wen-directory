@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
 import CategoryGrid from '@/components/CategoryGrid';
 import { useAuth } from '@/context/AuthContext';
 import ExpandCollapseToggle from '@/components/ExpandCollapseToggle';

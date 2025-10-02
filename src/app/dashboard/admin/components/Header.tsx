@@ -9,16 +9,7 @@ import { useAuth } from '@/context/AuthContext';
 // -----------------------------
 // Custom hook: Real-time clock
 // -----------------------------
-const useDateTime = () => {
-  const [dateTime, setDateTime] = useState<Date>(new Date());
 
-  useEffect(() => {
-    const id = setInterval(() => setDateTime(new Date()), 1000);
-    return () => clearInterval(id);
-  }, []);
-
-  return dateTime;
-};
 
 // -----------------------------
 // Custom hook: Detect clicks outside
@@ -51,7 +42,6 @@ const useClickOutside = (
 // -----------------------------
 export default function Header() {
   const pathname = usePathname();
-  const dateTime = useDateTime();
   const { logout, user } = useAuth();
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -69,14 +59,6 @@ export default function Header() {
     if (pathname.includes('/settings')) return 'الإعدادات العامة';
     return 'لوحة التحكم الرئيسية';
   };
-
-  // Format date/time (Arabic) - Simplified for cross-browser compatibility
-  const formattedDate = dateTime.toLocaleDateString('ar-EG', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
 
 
   // Animations
