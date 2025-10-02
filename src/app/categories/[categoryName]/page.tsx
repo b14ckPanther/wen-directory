@@ -6,7 +6,7 @@ import Link from 'next/link';
 import BusinessCard from '@/components/BusinessCard';
 import FilterModal from '@/components/FilterModal';
 import BusinessDetailModal from '@/components/BusinessDetailModal';
-import { Map, Edit, PlusCircle, AlertTriangle, ChevronsRight, SlidersHorizontal, ArrowDownUp } from 'lucide-react';
+import { Map, Edit, PlusCircle, AlertTriangle, ChevronsRight, SlidersHorizontal, ArrowDownUp, ListTree, ChevronDown } from 'lucide-react';
 import { Business, Subcategory } from '@/types';
 import Loader from '@/components/Loader';
 import { useAuth } from '@/context/AuthContext';
@@ -17,7 +17,25 @@ import DynamicIcon from '@/components/DynamicIcon';
 
 type ParentCategory = { id: number; name: string; slug: string; };
 
-// --- CORRECTED Draggable 3D Carousel Component ---
+// --- Custom hook to detect clicks outside a component ---
+const useClickOutside = (ref: React.RefObject<HTMLDivElement | null>, handler: () => void) => {
+  useEffect(() => {
+    const listener = (event: MouseEvent | TouchEvent) => {
+      if (!ref.current || ref.current.contains(event.target as Node)) {
+        return;
+      }
+      handler();
+    };
+    document.addEventListener('mousedown', listener);
+    document.addEventListener('touchstart', listener);
+    return () => {
+      document.removeEventListener('mousedown', listener);
+      document.removeEventListener('touchstart', listener);
+    };
+  }, [ref, handler]);
+};
+
+// --- Carousel Component (Mobile Optimized) ---
 const CategoryCarousel = ({ subcategories, activeSlug, parentCategory }: { subcategories: Subcategory[], activeSlug: string | undefined, parentCategory: ParentCategory | null }) => {
     const [activeIndex, setActiveIndex] = useState(0);
     const router = useRouter();
@@ -28,12 +46,10 @@ const CategoryCarousel = ({ subcategories, activeSlug, parentCategory }: { subca
     }, [activeSlug, subcategories]);
 
     const onDragEnd = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
-        const { offset } = info;
-        const dragThreshold = 70; // Swipe sensitivity
-
-        if (offset.x > dragThreshold) { // Swiped right
+        const dragThreshold = 70;
+        if (info.offset.x > dragThreshold) {
             setActiveIndex(i => Math.max(0, i - 1));
-        } else if (offset.x < -dragThreshold) { // Swiped left
+        } else if (info.offset.x < -dragThreshold) {
             setActiveIndex(i => Math.min(subcategories.length - 1, i + 1));
         }
     };
@@ -64,38 +80,22 @@ const CategoryCarousel = ({ subcategories, activeSlug, parentCategory }: { subca
                     {subcategories.map((sub, index) => {
                         const distance = index - activeIndex;
                         const isVisible = Math.abs(distance) <= 2;
-
                         if (!isVisible) return null;
-
                         return (
                             <motion.div
                                 key={sub.id}
                                 className="absolute"
-                                style={{ pointerEvents: 'none' }} // Make the container transparent to drag events
-                                initial={{
-                                    x: `${distance * 55}%`,
-                                    scale: 1 - Math.abs(distance) * 0.25,
-                                    opacity: 1 - Math.abs(distance) * 0.4,
-                                    zIndex: subcategories.length - Math.abs(distance)
-                                }}
-                                animate={{
-                                    x: `${distance * 55}%`,
-                                    scale: 1 - Math.abs(distance) * 0.25,
-                                    opacity: 1 - Math.abs(distance) * 0.4,
-                                    zIndex: subcategories.length - Math.abs(distance)
-                                }}
+                                style={{ pointerEvents: 'none' }}
+                                initial={{ x: `${distance * 55}%`, scale: 1 - Math.abs(distance) * 0.25, opacity: 1 - Math.abs(distance) * 0.4, zIndex: subcategories.length - Math.abs(distance) }}
+                                animate={{ x: `${distance * 55}%`, scale: 1 - Math.abs(distance) * 0.25, opacity: 1 - Math.abs(distance) * 0.4, zIndex: subcategories.length - Math.abs(distance) }}
                                 transition={{ type: 'spring', stiffness: 350, damping: 35 }}
                                 exit={{ opacity: 0, scale: 0.5 }}
                             >
                                 <motion.div
-                                    style={{ pointerEvents: 'auto' }} // Re-enable pointer events on the clickable element
+                                    style={{ pointerEvents: 'auto' }}
                                     onTap={() => router.push(`/categories/${sub.slug}`)}
                                     whileTap={{ scale: 0.95 }}
-                                    className={`flex flex-col items-center justify-center w-32 h-32 rounded-full transition-all duration-300
-                                    ${sub.slug === activeSlug 
-                                        ? 'bg-gold shadow-[0_0_20px_theme(colors.gold),0_0_40px_theme(colors.gold)]' 
-                                        : 'bg-[#1B2A41]/70 backdrop-blur-sm border border-gold/20'
-                                    }`}
+                                    className={`flex flex-col items-center justify-center w-32 h-32 rounded-full transition-all duration-300 ${sub.slug === activeSlug ? 'bg-gold shadow-[0_0_20px_theme(colors.gold),0_0_40px_theme(colors.gold)]' : 'bg-[#1B2A41]/70 backdrop-blur-sm border border-gold/20'}`}
                                 >
                                     <DynamicIcon name={sub.icon || 'HelpCircle'} size={32} className={sub.slug === activeSlug ? 'text-navy' : 'text-gold/80'} />
                                     <span className={`font-bold text-center text-sm mt-2 ${sub.slug === activeSlug ? 'text-navy' : 'text-gray-300'}`}>{sub.name}</span>
@@ -108,7 +108,6 @@ const CategoryCarousel = ({ subcategories, activeSlug, parentCategory }: { subca
         </div>
     );
 };
-
 
 const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm, businessName }: { isOpen: boolean; onClose: () => void; onConfirm: () => void; businessName: string; }) => {
     if (!isOpen) return null;
@@ -127,28 +126,40 @@ const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm, businessName }: {
     );
 };
 
-const SimplifiedFilterControls = ({ onOpenFilterModal, onSortClick }: { onOpenFilterModal: () => void, onSortClick: () => void }) => {
+const SimplifiedFilterControls = ({ onOpenFilterModal, onSortClick, subcategories, activeSlug, parentCategoryName }: { onOpenFilterModal: () => void; onSortClick: () => void; subcategories: Subcategory[]; activeSlug: string | undefined; parentCategoryName: string | null; }) => {
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const dropdownRef = useRef<HTMLDivElement>(null);
+    useClickOutside(dropdownRef, () => setIsDropdownOpen(false));
     return (
         <div className="container mx-auto px-4 py-4 flex justify-center items-center gap-4">
-            <motion.button
-                onClick={onOpenFilterModal}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-                whileHover={{ y: -3, scale: 1.05, boxShadow: "0 0 15px theme(colors.gold / 0.5)" }}
-                className="flex items-center gap-2 px-6 py-2 text-sm font-semibold rounded-full transition-all duration-300 text-gold bg-gold/10 border border-gold/30"
-            >
+            <motion.button onClick={onOpenFilterModal} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} whileHover={{ y: -3, scale: 1.05, boxShadow: "0 0 15px theme(colors.gold / 0.5)" }} className="flex items-center gap-2 px-6 py-2 text-sm font-semibold rounded-full transition-all duration-300 text-gold bg-gold/10 border border-gold/30">
                 <SlidersHorizontal size={16} />
                 <span>الفلاتر</span>
             </motion.button>
-             <motion.button
-                onClick={onSortClick}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                whileHover={{ y: -3, scale: 1.05, boxShadow: "0 0 15px hsl(0 0% 100% / 0.1)" }}
-                className="flex items-center gap-2 px-6 py-2 text-sm font-semibold rounded-full transition-all duration-300 text-gray-300 bg-[#1B2A41]/50 border border-gray-700"
-            >
+            <div className="relative" ref={dropdownRef}>
+                <motion.button onClick={() => setIsDropdownOpen(prev => !prev)} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} whileHover={{ y: -3, scale: 1.05, boxShadow: "0 0 15px hsl(0 0% 100% / 0.1)" }} className="flex items-center gap-2 px-6 py-2 text-sm font-semibold rounded-full transition-all duration-300 text-gray-300 bg-[#1B2A41]/50 border border-gray-700">
+                    <ListTree size={16} />
+                    <span>الفئات الفرعية</span>
+                    <ChevronDown size={16} className={`transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+                </motion.button>
+                <AnimatePresence>
+                    {isDropdownOpen && (
+                        <motion.div initial={{ opacity: 0, y: -10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -10, scale: 0.95 }} className="absolute top-full mt-2 w-64 bg-[#121c2c]/90 backdrop-blur-xl border border-gold/20 rounded-xl shadow-2xl z-10 p-2">
+                            <div className="px-3 py-2 text-sm font-bold text-gold border-b border-gold/20 mb-1">{parentCategoryName}</div>
+                            <div className="max-h-60 overflow-y-auto pr-2 custom-scrollbar">
+                                {subcategories.map(sub => (
+                                    <Link key={sub.id} href={`/categories/${sub.slug}`} scroll={false}>
+                                        <div onClick={() => setIsDropdownOpen(false)} className={`block w-full text-right px-3 py-2 text-sm rounded-md transition-colors ${sub.slug === activeSlug ? 'bg-gold/20 text-gold font-semibold' : 'text-gray-300 hover:bg-gold/10'}`}>
+                                            {sub.name}
+                                        </div>
+                                    </Link>
+                                ))}
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </div>
+            <motion.button onClick={onSortClick} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} whileHover={{ y: -3, scale: 1.05, boxShadow: "0 0 15px hsl(0 0% 100% / 0.1)" }} className="flex items-center gap-2 px-6 py-2 text-sm font-semibold rounded-full transition-all duration-300 text-gray-300 bg-[#1B2A41]/50 border border-gray-700">
                 <ArrowDownUp size={16} />
                 <span>الترتيب</span>
             </motion.button>
@@ -161,7 +172,6 @@ export default function CategoryResultsPage() {
     const router = useRouter();
     const categoryName = decodeURIComponent(params.categoryName as string);
     const { user } = useAuth();
-
     const [businesses, setBusinesses] = useState<Business[]>([]);
     const [subcategory, setSubcategory] = useState<(Subcategory & { category_id: number }) | null>(null);
     const [parentCategory, setParentCategory] = useState<ParentCategory | null>(null);
@@ -181,20 +191,16 @@ export default function CategoryResultsPage() {
             const { data: subcategoryData, error: subcategoryError } = await supabase.from('subcategories').select('*').eq('slug', categoryName).single();
             if (subcategoryError || !subcategoryData) throw new Error("الفئة الفرعية مش موجودة");
             setSubcategory(subcategoryData);
-            
             if (subcategoryData.category_id) {
                 const { data: parentData, error: parentError } = await supabase.from('categories').select('id, name, slug').eq('id', subcategoryData.category_id).single();
                 if (parentError) throw parentError;
                 setParentCategory(parentData);
-
                 const { data: siblingsData, error: siblingsError } = await supabase.from('subcategories').select('*').eq('category_id', subcategoryData.category_id).order('position');
                 if (siblingsError) throw siblingsError;
                 setSiblingSubcategories(siblingsData);
             }
-
             const { data: businessesData, error: businessesError } = await supabase.from('businesses').select('*').eq('subcategory_id', subcategoryData.id);
             if (businessesError) throw businessesError;
-            
             const formattedBusinesses = businessesData.map(b => ({ ...b, subcategory: subcategoryData.name })) as Business[];
             setBusinesses(formattedBusinesses);
         } catch (error) {
@@ -212,7 +218,6 @@ export default function CategoryResultsPage() {
     const handleAddBusiness = () => { setEditingBusiness(null); setIsFormModalOpen(true); };
     const handleEdit = (biz: Business) => { setEditingBusiness(biz); setIsFormModalOpen(true); };
     const handleDelete = (biz: Business) => { setDeletingBusiness(biz); };
-    
     const confirmDelete = async () => {
         if (!deletingBusiness) return;
         const { error } = await supabase.from('businesses').delete().eq('id', deletingBusiness.id);
@@ -226,14 +231,12 @@ export default function CategoryResultsPage() {
         <>
             <FilterModal isOpen={isFilterModalOpen} onClose={() => setIsFilterModalOpen(false)} />
             <BusinessDetailModal business={selectedBusiness} onClose={() => setSelectedBusiness(null)} />
-            
             {user?.role === 'admin' && (
                 <>
                     <BusinessFormModal isOpen={isFormModalOpen} onClose={() => setIsFormModalOpen(false)} onSave={fetchData} business={editingBusiness} initialSubcategoryId={subcategory?.id} />
                     <DeleteConfirmationModal isOpen={!!deletingBusiness} onClose={() => setDeletingBusiness(null)} onConfirm={confirmDelete} businessName={deletingBusiness?.name || ''} />
                 </>
             )}
-
             <div className="bg-navy min-h-screen">
                 <section className="relative bg-gradient-to-b from-[#0B132B] via-[#1B2A41] to-[#0A1024] pt-12 text-center overflow-hidden">
                     {user?.role === 'admin' && (
@@ -245,27 +248,23 @@ export default function CategoryResultsPage() {
                         </div>
                     )}
                     {siblingSubcategories.length > 0 && (
-                        <CategoryCarousel 
-                            subcategories={siblingSubcategories} 
-                            activeSlug={subcategory?.slug} 
-                            parentCategory={parentCategory}
-                        />
+                        <CategoryCarousel subcategories={siblingSubcategories} activeSlug={subcategory?.slug} parentCategory={parentCategory} />
                     )}
                 </section>
-                
                 <section className="bg-[#0A1024] border-y border-gold/10 sticky top-[80px] z-20 backdrop-blur-sm">
                      <SimplifiedFilterControls 
                         onOpenFilterModal={() => setIsFilterModalOpen(true)}
                         onSortClick={() => { alert('سيتم إضافة ميزة الترتيب قريباً!'); }}
+                        subcategories={siblingSubcategories}
+                        activeSlug={subcategory?.slug}
+                        parentCategoryName={parentCategory?.name || null}
                      />
                 </section>
-
                 <main className="container mx-auto px-4 py-8">
                     <div className="flex justify-between items-center mb-4">
                         <p className="text-gray/80">لقينا <span className="font-bold text-gold">{businesses.length}</span> نتائج</p>
                         <button className="hidden md:flex items-center gap-2 px-4 py-2 rounded-lg bg-gold/10 text-gold"><Map size={20} /> <span className="font-semibold">شوف الخريطة</span></button>
                     </div>
-
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                         {businesses.map((biz) => (
                             <BusinessCard key={biz.id} business={biz} onClick={() => !isEditMode && setSelectedBusiness(biz)} isEditMode={isEditMode} onEdit={() => handleEdit(biz)} onDelete={() => handleDelete(biz)} />
