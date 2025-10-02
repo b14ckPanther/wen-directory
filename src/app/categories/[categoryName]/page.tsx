@@ -1,36 +1,51 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import BusinessCard from '@/components/BusinessCard';
 import FilterModal from '@/components/FilterModal';
 import BusinessDetailModal from '@/components/BusinessDetailModal';
-import { Map, Edit, PlusCircle, AlertTriangle, ChevronsRight, SlidersHorizontal, Star, Zap } from 'lucide-react';
+import { Map, Edit, PlusCircle, AlertTriangle, ChevronsRight, SlidersHorizontal, ArrowDownUp } from 'lucide-react';
 import { Business, Subcategory } from '@/types';
 import Loader from '@/components/Loader';
 import { useAuth } from '@/context/AuthContext';
-import { motion, AnimatePresence, useTransform, useScroll } from 'framer-motion';
+import { motion, AnimatePresence, useMotionValue, PanInfo } from 'framer-motion';
 import BusinessFormModal from '@/components/BusinessFormModal';
 import { supabase } from '@/lib/supabase';
 import DynamicIcon from '@/components/DynamicIcon';
 
 type ParentCategory = { id: number; name: string; slug: string; };
 
-// --- NEW 3D CAROUSEL COMPONENT ---
+// --- NEW DRAGGABLE 3D CAROUSEL COMPONENT ---
 const CategoryCarousel = ({ subcategories, activeSlug, parentCategory }: { subcategories: Subcategory[], activeSlug: string | undefined, parentCategory: ParentCategory | null }) => {
     const [activeIndex, setActiveIndex] = useState(0);
+    const dragX = useMotionValue(0);
+    const containerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         const foundIndex = subcategories.findIndex(s => s.slug === activeSlug);
         setActiveIndex(foundIndex !== -1 ? foundIndex : 0);
     }, [activeSlug, subcategories]);
 
-    // This creates the "3D" effect. Items further from the center are smaller and less opaque.
+    const onDragEnd = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+        const itemWidth = 110;
+        const velocityThreshold = 500;
+        const offsetThreshold = itemWidth / 2;
+
+        if (Math.abs(info.velocity.x) > velocityThreshold) {
+            const direction = info.velocity.x > 0 ? -1 : 1;
+            setActiveIndex(prev => Math.max(0, Math.min(subcategories.length - 1, prev + direction)));
+        } else if (Math.abs(info.offset.x) > offsetThreshold) {
+            const direction = info.offset.x > 0 ? -1 : 1;
+            setActiveIndex(prev => Math.max(0, Math.min(subcategories.length - 1, prev + direction)));
+        }
+    };
+
     const getStyle = (index: number) => {
         const distance = Math.abs(activeIndex - index);
-        const scale = Math.max(1 - distance * 0.2, 0.5);
-        const opacity = Math.max(1 - distance * 0.3, 0.3);
+        const scale = Math.max(1 - distance * 0.25, 0.4);
+        const opacity = Math.max(1 - distance * 0.35, 0.2);
         const zIndex = subcategories.length - distance;
         return { scale, opacity, zIndex };
     };
@@ -50,22 +65,29 @@ const CategoryCarousel = ({ subcategories, activeSlug, parentCategory }: { subca
                 </motion.nav>
             )}
             
-            <div className="relative w-full h-56 flex items-center justify-center" style={{ perspective: '1000px' }}>
+        <motion.div 
+    ref={containerRef}
+    drag="x" 
+    dragConstraints={{ left: -(subcategories.length - 1) * 110, right: 0 }}
+    onDragEnd={onDragEnd}
+    style={{ x: dragX, perspective: "1200px" }}
+    className="relative w-full h-56 flex items-center justify-center cursor-grab active:cursor-grabbing"
+>
                 {subcategories.map((sub, index) => {
                     const { scale, opacity, zIndex } = getStyle(index);
-                    const position = (index - activeIndex) * 100; // Adjust spacing
+                    const position = (index - activeIndex) * 110;
 
                     return (
                         <motion.div
                             key={sub.id}
-                            initial={{ x: `${position}%`, scale: 0, opacity: 0 }}
                             animate={{ x: `${position}%`, scale, opacity }}
-                            transition={{ type: 'spring', stiffness: 200, damping: 25 }}
+                            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                             style={{ zIndex, position: 'absolute' }}
                         >
-                            <Link href={`/categories/${sub.slug}`} scroll={false}>
-                                <div
-                                    className={`flex flex-col items-center justify-center w-32 h-32 rounded-full transition-all duration-300 cursor-pointer
+                            <Link href={`/categories/${sub.slug}`} scroll={false} draggable="false">
+                                <motion.div
+                                    whileTap={{ scale: 0.95 }}
+                                    className={`flex flex-col items-center justify-center w-32 h-32 rounded-full transition-all duration-300
                                     ${sub.slug === activeSlug 
                                         ? 'bg-gold shadow-[0_0_20px_theme(colors.gold),0_0_40px_theme(colors.gold)]' 
                                         : 'bg-[#1B2A41]/70 backdrop-blur-sm border border-gold/20'
@@ -73,53 +95,16 @@ const CategoryCarousel = ({ subcategories, activeSlug, parentCategory }: { subca
                                 >
                                     <DynamicIcon name={sub.icon || 'HelpCircle'} size={32} className={sub.slug === activeSlug ? 'text-navy' : 'text-gold/80'} />
                                     <span className={`font-bold text-center text-sm mt-2 ${sub.slug === activeSlug ? 'text-navy' : 'text-gray-300'}`}>{sub.name}</span>
-                                </div>
+                                </motion.div>
                             </Link>
                         </motion.div>
                     );
                 })}
-            </div>
+            </motion.div>
         </div>
     );
 };
 
-
-const ConstellationFilters = ({ onOpenFilterModal }: { onOpenFilterModal: () => void }) => {
-    const filters = [
-        { label: 'كل الفلاتر', icon: SlidersHorizontal, main: true },
-        { label: 'الأعلى تقييماً', icon: Star, main: false },
-        { label: 'مفتوح الآن', icon: Zap, main: false },
-    ];
-    
-    return (
-        <div className="container mx-auto px-4 py-6 flex justify-center items-center gap-4 flex-wrap">
-            {filters.map((filter, index) => {
-                const Icon = filter.icon;
-                return (
-                    <motion.button
-                        key={filter.label}
-                        onClick={filter.main ? onOpenFilterModal : undefined}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.2 + index * 0.1 }}
-                        whileHover={{ y: -3, scale: 1.05,
-                           boxShadow: filter.main ? "0 0 15px theme(colors.gold / 0.5)" : "0 0 15px hsl(0 0% 100% / 0.1)"
-                        }}
-                        className={`flex-shrink-0 flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-full transition-all duration-300
-                            ${filter.main 
-                                ? 'text-gold bg-gold/10 border border-gold/30' 
-                                : 'text-gray-300 bg-[#1B2A41]/50 border border-gray-700'
-                            }`
-                        }
-                    >
-                        <Icon size={16} />
-                        <span>{filter.label}</span>
-                    </motion.button>
-                )
-            })}
-        </div>
-    );
-}
 
 const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm, businessName }: { isOpen: boolean; onClose: () => void; onConfirm: () => void; businessName: string; }) => {
     if (!isOpen) return null;
@@ -137,6 +122,35 @@ const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm, businessName }: {
         </motion.div>
     );
 };
+
+const SimplifiedFilterControls = ({ onOpenFilterModal, onSortClick }: { onOpenFilterModal: () => void, onSortClick: () => void }) => {
+    return (
+        <div className="container mx-auto px-4 py-4 flex justify-center items-center gap-4">
+            <motion.button
+                onClick={onOpenFilterModal}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                whileHover={{ y: -3, scale: 1.05, boxShadow: "0 0 15px theme(colors.gold / 0.5)" }}
+                className="flex items-center gap-2 px-6 py-2 text-sm font-semibold rounded-full transition-all duration-300 text-gold bg-gold/10 border border-gold/30"
+            >
+                <SlidersHorizontal size={16} />
+                <span>الفلاتر</span>
+            </motion.button>
+             <motion.button
+                onClick={onSortClick}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                whileHover={{ y: -3, scale: 1.05, boxShadow: "0 0 15px hsl(0 0% 100% / 0.1)" }}
+                className="flex items-center gap-2 px-6 py-2 text-sm font-semibold rounded-full transition-all duration-300 text-gray-300 bg-[#1B2A41]/50 border border-gray-700"
+            >
+                <ArrowDownUp size={16} />
+                <span>الترتيب</span>
+            </motion.button>
+        </div>
+    );
+}
 
 export default function CategoryResultsPage() {
     const params = useParams();
@@ -217,7 +231,7 @@ export default function CategoryResultsPage() {
             )}
 
             <div className="bg-navy min-h-screen">
-                <section className="relative bg-gradient-to-b from-[#0B132B] via-[#1B2A41] to-[#0A1024] pt-12 pb-4 text-center overflow-hidden">
+                <section className="relative bg-gradient-to-b from-[#0B132B] via-[#1B2A41] to-[#0A1024] pt-12 text-center overflow-hidden">
                     {user?.role === 'admin' && (
                         <div className="absolute top-4 right-4 z-20">
                             <button onClick={() => setIsEditMode(!isEditMode)} className={`flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-full transition-colors ${isEditMode ? 'bg-red-500/20 text-red-300 border border-red-500/50' : 'bg-gold/10 text-gold border border-gold/50'}`}>
@@ -235,9 +249,11 @@ export default function CategoryResultsPage() {
                     )}
                 </section>
                 
-                {/* Section for Filters */}
-                <section className="bg-[#0A1024] border-y border-gold/10">
-                     <ConstellationFilters onOpenFilterModal={() => setIsFilterModalOpen(true)} />
+                <section className="bg-[#0A1024] border-y border-gold/10 sticky top-[80px] z-20 backdrop-blur-sm">
+                     <SimplifiedFilterControls 
+                        onOpenFilterModal={() => setIsFilterModalOpen(true)}
+                        onSortClick={() => { alert('سيتم إضافة ميزة الترتيب قريباً!'); }}
+                     />
                 </section>
 
                 <main className="container mx-auto px-4 py-8">
