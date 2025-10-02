@@ -21,6 +21,7 @@ export default function Home() {
   const [allCategorySections, setAllCategorySections] = useState<CategorySection[]>([]);
   const [popularCategoryIds, setPopularCategoryIds] = useState<number[]>([]);
   const [popularCategories, setPopularCategories] = useState<CategorySection[]>([]);
+  const [loadingPopular, setLoadingPopular] = useState(true);
   
   const [openSections, setOpenSections] = useState<{ [key: string]: boolean }>({});
   const [preEditOpenSections, setPreEditOpenSections] = useState<{ [key: string]: boolean }>({});
@@ -31,12 +32,14 @@ export default function Home() {
   const searchSuggestions = useMemo(() => ["على شو بتدوّر؟", "مطاعم...", "أطباء...", "محامون...", "صالونات..."], []);
 
   const fetchAllData = useCallback(async () => {
+    setLoadingPopular(true);
     // Fetch all categories with their subcategories
     const { data: categories, error: catError } = await supabase.from('categories').select('*').order('position');
     const { data: subcategories, error: subError } = await supabase.from('subcategories').select('*').order('position');
     
     if (catError || subError) {
       console.error(catError || subError);
+      setLoadingPopular(false);
       return;
     }
 
@@ -65,20 +68,22 @@ export default function Home() {
 
   // This effect derives the `popularCategories` state from the fetched data
   useEffect(() => {
-    if (popularCategoryIds.length > 0 && allCategorySections.length > 0) {
-        const idToCategoryMap = new Map(allCategorySections.map(cat => [cat.id, cat]));
-        const orderedPopular = popularCategoryIds
-            .map(id => idToCategoryMap.get(id))
-            .filter((c): c is CategorySection => !!c); // Filter out any undefined results
-        setPopularCategories(orderedPopular);
-    } else if (allCategorySections.length > 0) {
-        // Provide a default fallback if no homepage categories are set in the database
-        const fallbackSlugs = ['طعام', 'صحة', 'جمال', 'منزل-وبناء', 'تسوق'];
-        setPopularCategories(
-            allCategorySections
+    if (allCategorySections.length > 0) {
+        let finalPopularCategories: CategorySection[] = [];
+        if (popularCategoryIds.length > 0) {
+            const idToCategoryMap = new Map(allCategorySections.map(cat => [cat.id, cat]));
+            finalPopularCategories = popularCategoryIds
+                .map(id => idToCategoryMap.get(id))
+                .filter((c): c is CategorySection => !!c);
+        } else {
+            // Provide a default fallback if no homepage categories are set
+            const fallbackSlugs = ['طعام', 'صحة', 'جمال', 'منزل-وبناء', 'تسوق'];
+            finalPopularCategories = allCategorySections
               .filter(s => fallbackSlugs.includes(s.slug))
-              .slice(0, 5) // Ensure there's a limit
-        );
+              .slice(0, 5);
+        }
+        setPopularCategories(finalPopularCategories);
+        setLoadingPopular(false); 
     }
   }, [popularCategoryIds, allCategorySections]);
   
@@ -246,20 +251,29 @@ export default function Home() {
         </motion.div>
       </section>
 
-      <CategoryGrid 
-        sections={popularCategories} 
-        isEditMode={isEditMode}
-        openSections={openSections}
-        onToggleSection={handleToggleSection}
-        forceReload={forceReload}
-      />
-
-      <div className="text-center bg-navy pb-16">
-          <Link href="/categories" className="inline-flex items-center gap-2 text-gold font-bold py-3 px-8 rounded-full border-2 border-gold/50 hover:bg-gold/10 transition-all transform hover:scale-105">
-              <span>عرض كل الفئات</span>
-              <ChevronLeft size={20} />
+      <div className="bg-navy py-8 text-center">
+          <Link href="/categories" passHref>
+              <motion.div
+                  whileHover={{ scale: 1.03, y: -5, boxShadow: '0 10px 30px rgba(255, 215, 0, 0.25)' }}
+                  whileTap={{ scale: 0.98 }}
+                  className="group relative inline-flex items-center justify-center gap-4 text-gold font-bold py-4 px-10 rounded-xl bg-[#1B2A41] border-2 border-gold/30 shadow-lg transition-all duration-300 overflow-hidden"
+              >
+                  <div className="absolute inset-0 bg-gradient-to-r from-gold/10 via-gold/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                  <span className="relative z-10 text-lg">عرض كل الفئات</span>
+                  <ChevronLeft className="relative z-10 transition-transform duration-300 group-hover:translate-x-1" size={22} />
+              </motion.div>
           </Link>
       </div>
+
+      {!loadingPopular && (
+          <CategoryGrid 
+            sections={popularCategories} 
+            isEditMode={isEditMode}
+            openSections={openSections}
+            onToggleSection={handleToggleSection}
+            forceReload={forceReload}
+          />
+      )}
 
       <section className="bg-gradient-to-r from-[#0B132B] via-[#1B2A41] to-[#0B2A41] py-16">
         <motion.div
