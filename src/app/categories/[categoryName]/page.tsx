@@ -154,7 +154,7 @@ const SimplifiedFilterControls = ({ onOpenFilterModal, onSortClick, subcategorie
             <div className="relative" ref={dropdownRef}>
                 <motion.button onClick={() => setIsDropdownOpen(prev => !prev)} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} whileHover={{ y: -3, scale: 1.05, boxShadow: "0 0 15px hsl(0 0% 100% / 0.1)" }} className="flex items-center gap-2 px-6 py-2 text-sm font-semibold rounded-full transition-all duration-300 text-gray-300 bg-[#1B2A41]/50 border border-gray-700">
                     <ListTree size={16} />
-                    <span>الفئات</span>
+                    <span>الفئات الفرعية</span>
                     <ChevronDown size={16} className={`transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
                 </motion.button>
                 <AnimatePresence>
@@ -192,13 +192,23 @@ export default function CategoryResultsPage() {
     const [parentCategory, setParentCategory] = useState<ParentCategory | null>(null);
     const [siblingSubcategories, setSiblingSubcategories] = useState<Subcategory[]>([]);
     const [loading, setLoading] = useState(true);
-    const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
     const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
+    const [infoModalMessage, setInfoModalMessage] = useState('');
     const [selectedBusiness, setSelectedBusiness] = useState<Business | null>(null);
     const [isEditMode, setIsEditMode] = useState(false);
     const [isFormModalOpen, setIsFormModalOpen] = useState(false);
     const [editingBusiness, setEditingBusiness] = useState<Business | null>(null);
     const [deletingBusiness, setDeletingBusiness] = useState<Business | null>(null);
+
+    const handleSortClick = () => {
+        setInfoModalMessage("سيتم إضافة ميزة الترتيب قريبًا!");
+        setIsInfoModalOpen(true);
+    };
+
+    const handleFilterClick = () => {
+        setInfoModalMessage("سيتم إضافة ميزة الفلاتر قريبًا!");
+        setIsInfoModalOpen(true);
+    };
 
     const fetchData = useCallback(async () => {
         if (!categoryName) return;
@@ -245,9 +255,8 @@ export default function CategoryResultsPage() {
 
     return (
         <>
-            <FilterModal isOpen={isFilterModalOpen} onClose={() => setIsFilterModalOpen(false)} />
             <BusinessDetailModal business={selectedBusiness} onClose={() => setSelectedBusiness(null)} />
-            <InfoModal isOpen={isInfoModalOpen} onClose={() => setIsInfoModalOpen(false)} message="سيتم إضافة ميزة الترتيب قريبًا!" />
+            <InfoModal isOpen={isInfoModalOpen} onClose={() => setIsInfoModalOpen(false)} message={infoModalMessage} />
             
             {user?.role === 'admin' && (
                 <>
@@ -271,8 +280,8 @@ export default function CategoryResultsPage() {
                 </section>
                 <section className="bg-[#0A1024] border-y border-gold/10 sticky top-[80px] z-20 backdrop-blur-sm">
                      <SimplifiedFilterControls 
-                        onOpenFilterModal={() => setIsFilterModalOpen(true)}
-                        onSortClick={() => setIsInfoModalOpen(true)}
+                        onOpenFilterModal={handleFilterClick}
+                        onSortClick={handleSortClick}
                         subcategories={siblingSubcategories}
                         activeSlug={subcategory?.slug}
                         parentCategoryName={parentCategory?.name || null}
