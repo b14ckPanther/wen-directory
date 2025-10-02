@@ -1,28 +1,24 @@
-// src/app/page.tsx
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import CategoryGrid from '@/components/CategoryGrid';
+import { useAuth } from '@/context/AuthContext';
 import { useLocation } from '@/context/LocationContext';
 import { useChat } from '@/context/ChatContext';
-import { Bot, Search, MessageSquare, ChevronLeft, type LucideIcon, House } from 'lucide-react';
+import { Bot, Search, MessageSquare, ChevronLeft, type LucideIcon, Edit, UtensilsCrossed, Coffee, Cake, CookingPot, Truck, Beef, ShoppingBasket, PartyPopper, Stethoscope, Hospital, Pill, Dna, Bot as BotIcon, Scale, Handshake, HeartPulse, Sparkles, Droplet, Scissors, Paintbrush, SprayCan, PersonStanding, Diamond, HardHat, Wrench, Zap, Hammer, PaintRoller, Ruler, Bug, Car, CarTaxiFront, HandCoins, Settings2, Landmark, Calculator, DraftingCompass, Users, Megaphone, Code, PenTool, ShoppingCart, Shirt, Laptop, Sofa, Gift, BookOpen, ToyBrick, Dumbbell, Camera, Music, Clapperboard, Palette, GraduationCap, School, BookUser, Library, Languages, Cat, Watch, Cross, Dog, Bone, Bird, Gamepad2, KeyRound, Factory, Printer, Sprout, Leaf, Recycle, Tractor, TriangleAlert, Bike, Sailboat, ParkingCircle, Building, Brush, Gem, Drama, ClipboardList , Flower, Mail, ShieldCheck, TrendingUp, House, Repeat, Hotel, Plane, Map, Ticket, Stamp,Warehouse } from 'lucide-react';
 import { motion, Variants } from 'framer-motion';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
-import { UtensilsCrossed, Coffee, Cake, CookingPot, Truck, Beef, ShoppingBasket, PartyPopper, Stethoscope, Hospital, Pill, Dna, Bot as BotIcon, Scale, Handshake, HeartPulse, Sparkles, Droplet, Scissors, Paintbrush, SprayCan, PersonStanding, Diamond, HardHat, Wrench, Zap, Hammer, PaintRoller, Ruler, Bug, Car, CarTaxiFront, HandCoins, Settings2, Landmark, Calculator, DraftingCompass, Users, Megaphone, Code, PenTool, ShoppingCart, Shirt, Laptop, Sofa, Gift, BookOpen, ToyBrick, Dumbbell, Camera, Music, Clapperboard, Palette, GraduationCap, School, BookUser, Library, Languages, Cat, Watch, Cross, Dog, Bone, Bird, Gamepad2, KeyRound, Factory, Printer, Sprout, Leaf, Recycle, Tractor, TriangleAlert, Bike, Sailboat, ParkingCircle, Building, Brush, Gem, Drama, ClipboardList , Flower, Mail, ShieldCheck, TrendingUp, Repeat, Hotel, Plane, Map, Ticket, Stamp,Warehouse } from 'lucide-react';
 
 // --- Define specific types for our data structure ---
-
-// Type for a single subcategory (like 'Restaurants', 'Cafes')
 type Subcategory = {
   id: number;
   name: string;
   slug: string;
-  icon: LucideIcon;
+  icon: LucideIcon | string; // Allow string for icon name from DB
   category_id: number;
 };
 
-// Type for a main category section (like 'Food & Dining')
 type CategorySection = {
   id: number;
   name: string;
@@ -30,7 +26,7 @@ type CategorySection = {
   description: string | null;
   slug: string;
   image: string | null;
-  categories: Subcategory[]; // This now contains an array of typed Subcategory objects
+  categories: Subcategory[];
 };
 
 
@@ -50,37 +46,45 @@ const iconMap: { [key: string]: LucideIcon } = {
 
 
 export default function Home() {
+  const { user } = useAuth();
+  const [isEditMode, setIsEditMode] = useState(false);
   const { selectedLocation, openLocationModal } = useLocation();
   const { toggleChat } = useChat();
   const [categorySections, setCategorySections] = useState<CategorySection[]>([]);
+  
+  // State to manage which accordions are open
+  const [openSections, setOpenSections] = useState<{ [key: string]: boolean }>({});
+  const [preEditOpenSections, setPreEditOpenSections] = useState<{ [key: string]: boolean }>({});
+  
+  const [placeholder, setPlaceholder] = useState('');
+  const searchSuggestions = useMemo(() => ["على شو بتدوّر؟", "مطاعم...", "أطباء...", "محامون...", "صالونات..."], []);
 
-  useEffect(() => {
-    const fetchCategories = async () => {
-      const { data: categories, error: catError } = await supabase.from('categories').select('*');
-      const { data: subcategories, error: subError } = await supabase.from('subcategories').select('*');
+  const fetchCategories = useCallback(async () => {
+    const { data: categories, error: catError } = await supabase.from('categories').select('*').order('position');
+    const { data: subcategories, error: subError } = await supabase.from('subcategories').select('*').order('position');
 
-      if (catError || subError) {
-        console.error(catError || subError);
-        return;
-      }
+    if (catError || subError) {
+      console.error(catError || subError);
+      return;
+    }
 
-      const sections: CategorySection[] = categories.map(category => ({
-        ...category,
-        title: category.name,
-        categories: subcategories
-          .filter(sub => sub.category_id === category.id)
-          .map(sub => ({ 
-            ...sub, 
-            icon: iconMap[sub.icon as string] || UtensilsCrossed 
-          }))
-      }));
+    const sections: CategorySection[] = categories.map(category => ({
+      ...category,
+      title: category.name,
+      categories: subcategories
+        .filter(sub => sub.category_id === category.id)
+        .map(sub => ({ 
+          ...sub, 
+          icon: iconMap[sub.icon as string] || UtensilsCrossed 
+        }))
+    }));
 
-      setCategorySections(sections);
-    };
-
-    fetchCategories();
+    setCategorySections(sections);
   }, []);
-
+  
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
 
   const popularCategories = useMemo(() => [
     categorySections.find(s => s.slug === 'طعام'),
@@ -88,10 +92,30 @@ export default function Home() {
     categorySections.find(s => s.slug === 'جمال'),
     categorySections.find(s => s.slug === 'منزل-وبناء'),
     categorySections.find(s => s.slug === 'تسوق'),
-  ], [categorySections]);
+  ].filter((c): c is CategorySection => !!c), [categorySections]);
+  
+  const handleToggleSection = (title: string) => {
+    if (isEditMode) return;
+    setOpenSections(prev => ({ ...prev, [title]: !prev[title] }));
+  };
 
-  const [placeholder, setPlaceholder] = useState('');
-  const searchSuggestions = useMemo(() => ["على شو بتدوّر؟", "مطاعم...", "أطباء...", "محامون...", "صالونات..."], []);
+  const handleSetEditMode = (isEditing: boolean) => {
+      setIsEditMode(isEditing);
+      if (isEditing) {
+          setPreEditOpenSections(openSections);
+          const allOpen = popularCategories.reduce((acc, section) => {
+              if(section) acc[section.title] = true;
+              return acc;
+          }, {} as { [key: string]: boolean });
+          setOpenSections(allOpen);
+      } else {
+          setOpenSections(preEditOpenSections);
+      }
+  };
+
+  const forceReload = () => {
+      fetchCategories();
+  };
 
   useEffect(() => {
     let suggestionIndex = 0;
@@ -126,7 +150,6 @@ export default function Home() {
     };
 
     timeoutId = setTimeout(type, 150);
-
     return () => clearTimeout(timeoutId);
   }, [searchSuggestions]);
 
@@ -162,6 +185,7 @@ export default function Home() {
           >
             وين هو دليلك الكامل لأحسن الخدمات والمهنيين بمنطقتك.
           </motion.p>
+            
           <motion.div className="mt-6" variants={itemVariants}>
             <button
               onClick={openLocationModal}
@@ -170,6 +194,23 @@ export default function Home() {
               موقعك الحالي: {selectedLocation}
             </button>
           </motion.div>
+          
+          {user?.role === 'admin' && (
+            <motion.div className="mt-8" variants={itemVariants}>
+              <button
+                onClick={() => handleSetEditMode(!isEditMode)}
+                className={`flex items-center gap-2 mx-auto px-6 py-2 font-semibold rounded-full transition-colors ${
+                  isEditMode
+                    ? 'bg-red-500/20 text-red-300 border border-red-500/50'
+                    : 'bg-gold/10 text-gold border border-gold/50'
+                }`}
+              >
+                <Edit size={18} />
+                {isEditMode ? 'Finish Editing' : 'Edit Page'}
+              </button>
+            </motion.div>
+          )}
+
           <motion.div className="mt-8 max-w-2xl mx-auto" variants={itemVariants}>
             <form className="relative group">
               <input
@@ -198,7 +239,13 @@ export default function Home() {
         </motion.div>
       </section>
 
-      <CategoryGrid sections={popularCategories} />
+      <CategoryGrid 
+        sections={popularCategories} 
+        isEditMode={isEditMode}
+        openSections={openSections}
+        onToggleSection={handleToggleSection}
+        forceReload={forceReload}
+      />
 
       <div className="text-center bg-navy pb-16">
           <Link href="/categories" className="inline-flex items-center gap-2 text-gold font-bold py-3 px-8 rounded-full border-2 border-gold/50 hover:bg-gold/10 transition-all transform hover:scale-105">
@@ -207,7 +254,7 @@ export default function Home() {
           </Link>
       </div>
 
-      <section className="bg-gradient-to-r from-[#0B132B] via-[#1B2A41] to-[#0B132B] py-16">
+      <section className="bg-gradient-to-r from-[#0B132B] via-[#1B2A41] to-[#0B2A41] py-16">
         <motion.div
           className="container mx-auto px-4 text-center"
           initial={{ opacity: 0, y: 20 }}

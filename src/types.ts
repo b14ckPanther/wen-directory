@@ -1,4 +1,5 @@
 // src/types.ts
+import { type LucideIcon } from 'lucide-react';
 
 // --- Shared User & Auth Types ---
 export type UserRole = 'admin' | 'owner' | 'user';
@@ -9,6 +10,26 @@ export type User = {
   role: UserRole;
   subscription?: SubscriptionPlan;
   businessType?: 'products' | 'services';
+};
+
+
+// --- Category and Subcategory Types ---
+export type Subcategory = {
+  id: number;
+  name: string;
+  slug: string;
+  icon: LucideIcon | string; // Allow string for icon name from DB, LucideIcon for component
+  category_id: number;
+};
+
+export type CategorySection = {
+  id: number;
+  name: string;
+  title: string;
+  slug: string;
+  image: string | null;
+  description: string | null;
+  categories: Subcategory[];
 };
 
 
@@ -28,31 +49,33 @@ export type BusinessStatus = 'مقبول' | 'قيد المراجعة' | 'مرف�
 type BusinessBase = {
   id: number;
   name: string;
-  image: string;
+  image: string | null; // Can be null
   rating: number;
   distance: string;
   isOpen: boolean;
-  // Add the missing properties here
   category: string;
-  subcategory: string; // ✅ ADD THIS LINE
-  owner: string;
+  subcategory: string;
+  owner: string | null; // Can be null
   status: BusinessStatus;
   subscription: SubscriptionPlan;
 };
 
 // Specific type for Restaurants
 export type Restaurant = BusinessBase & {
-  description: string;
-  logo: string;
-  phone: string;
+  description: string | null; // Can be null
+  logo: string | null; // Can be null
+  phone: string | null; // Can be null
   menu: MenuItem[];
   cuisine?: string;
   priceRange?: string;
 };
 
-// Specific type for Clinics
+// Specific type for Clinics or other non-restaurant businesses
 export type Clinic = BusinessBase & {
   specialty: string;
+  description: string | null;
+  logo: string | null;
+  phone: string | null;
 };
 
 // A single, unified Business type that can be a Restaurant or a Clinic
