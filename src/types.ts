@@ -1,3 +1,4 @@
+// src/types.ts
 
 // --- Shared User & Auth Types ---
 export type UserRole = 'admin' | 'owner' | 'user';
@@ -50,6 +51,9 @@ type BusinessBase = {
   id: number;
   name: string;
   image: string | null;
+  logo: string | null;
+  description: string | null;
+  phone: string | null;
   rating: number;
   distance: string;
   isOpen: boolean;
@@ -58,17 +62,16 @@ type BusinessBase = {
   owner: string | null;
   status: BusinessStatus;
   subscription: SubscriptionPlan;
-  phone: string | null;
   category_id: number | null;
   subcategory_id: number | null;
+  instagram: string | null;
+  facebook: string | null;
+  website: string | null;
 };
 
 // Specific type for Restaurants
 export type Restaurant = BusinessBase & {
-  description: string | null; // Can be null
-  logo: string | null; // Can be null
-  phone: string | null; // Can be null
-  menu: MenuItem[];
+  menu: MenuItem[] | null; // ✅ FIX: Allow menu to be null
   cuisine?: string;
   priceRange?: string;
 };
@@ -76,9 +79,6 @@ export type Restaurant = BusinessBase & {
 // Specific type for Clinics or other non-restaurant businesses
 export type Clinic = BusinessBase & {
   specialty: string;
-  description: string | null;
-  logo: string | null;
-  phone: string | null;
 };
 
 // A single, unified Business type that can be a Restaurant or a Clinic

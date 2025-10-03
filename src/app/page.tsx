@@ -1,3 +1,4 @@
+// src/app/page.tsx
 'use client';
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
@@ -11,6 +12,8 @@ import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import type { CategorySection } from '@/types';
 import { ManageHomepageModal } from '@/components/modals/ManageHomepageModal';
+
+const searchSuggestions = ["على شو بتدوّر؟", "مطاعم...", "أطباء...", "محامون...", "صالونات..."];
 
 export default function Home() {
   const { user } = useAuth();
@@ -28,8 +31,6 @@ export default function Home() {
   
   const [placeholder, setPlaceholder] = useState('');
   const [isManageModalOpen, setIsManageModalOpen] = useState(false);
-
-  const searchSuggestions = useMemo(() => ["على شو بتدوّر؟", "مطاعم...", "أطباء...", "محامون...", "صالونات..."], []);
 
   const fetchAllData = useCallback(async () => {
     setLoadingPopular(true);
@@ -146,7 +147,7 @@ export default function Home() {
 
     timeoutId = setTimeout(type, 150);
     return () => clearTimeout(timeoutId);
-  }, [searchSuggestions]);
+  }, []); // ✅ FIX: Dependency array is now empty as the constant is stable.
 
   const containerVariants: Variants = {
     hidden: { opacity: 0 },
