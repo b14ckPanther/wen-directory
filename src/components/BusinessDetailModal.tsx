@@ -1,15 +1,17 @@
 // src/components/BusinessDetailModal.tsx
 'use client';
-import React, { useState, useMemo, ChangeEvent } from 'react';
+import React, { useState, useMemo, ChangeEvent, useEffect } from 'react';
 import Image from 'next/image';
 import { AnimatePresence, motion } from 'framer-motion';
-import { 
-  X, ShoppingCart, ArrowLeft, Utensils, Phone, MapPin, Share2, Instagram, Facebook, Globe, Plus, 
-  ImageIcon, Building, Settings, UploadCloud
-} from 'lucide-react'; 
-import { Business, MenuItem, Restaurant } from '@/types';
+import {
+  X, ShoppingCart, ArrowLeft, Utensils, Phone, MapPin, Share2, Instagram, Facebook, Globe, Plus,
+  ImageIcon, Building, Settings, UploadCloud, Wifi, Wind, Map, Video, Camera, FileText, ClipboardList, Sparkles
+} from 'lucide-react';
+import { Business, MenuItem, Restaurant, ServiceItem } from '@/types';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabase';
+import { LucideIcon } from 'lucide-react';
+import DynamicIcon from './DynamicIcon'; // ✅ ADDED: Import your DynamicIcon component
 
 type BusinessDetailModalProps = {
   business: Business | null;
@@ -50,6 +52,16 @@ const CartItemRow = ({ item, count }: { item: MenuItem, count: number }) => (
   </div>
 );
 
+const ServiceGridItem = ({ item }: { item: ServiceItem }) => (
+    <div className="bg-[#1B2A41] p-4 rounded-lg border border-gold/10 flex flex-col items-center text-center">
+        {item.icon && <DynamicIcon name={item.icon} size={28} className="text-gold mb-2" />}
+        <h4 className="font-bold text-gray-200">{item.name}</h4>
+        {item.description && <p className="text-sm text-gray-400 mt-1">{item.description}</p>}
+        {item.price && <p className="font-semibold text-gold mt-2">{item.price}</p>}
+    </div>
+);
+
+
 // --- ADMIN CONTROL CENTER ---
 type AdminControlCenterProps = {
     business: Business;
@@ -64,6 +76,11 @@ const AdminControlCenter: React.FC<AdminControlCenterProps> = ({ business, onClo
         instagram: business.instagram || '',
         facebook: business.facebook || '',
         website: business.website || '',
+        latitude: business.latitude || '',
+        longitude: business.longitude || '',
+        video_url: business.video_url || '',
+        amenities: business.amenities?.join(', ') || '',
+        services: business.services ? JSON.stringify(business.services, null, 2) : '[]',
     });
     const [coverFile, setCoverFile] = useState<File | null>(null);
     const [logoFile, setLogoFile] = useState<File | null>(null);
@@ -106,8 +123,33 @@ const AdminControlCenter: React.FC<AdminControlCenterProps> = ({ business, onClo
                 logoUrl = supabase.storage.from('business-assets').getPublicUrl(filePath).data.publicUrl;
             }
 
+            let parsedServices: ServiceItem[] | null = null;
+            try {
+                if (formData.services.trim() === '' || formData.services.trim() === '[]') {
+                    parsedServices = [];
+                } else {
+                    parsedServices = JSON.parse(formData.services);
+                    if (!Array.isArray(parsedServices)) {
+                        throw new Error("Services must be a JSON array.");
+                    }
+                }
+            } catch (jsonError) {
+                alert(`خطأ في تنسيق JSON للخدمات. يرجى استخدام التنسيق الصحيح: [{"name": "اسم الخدمة", "description": "وصف", "price": "السعر", "icon": "IconName"}]`);
+                setIsSaving(false);
+                return;
+            }
+
             const updatePayload = {
-                ...formData,
+                description: formData.description,
+                phone: formData.phone,
+                instagram: formData.instagram,
+                facebook: formData.facebook,
+                website: formData.website,
+                latitude: formData.latitude ? parseFloat(String(formData.latitude)) : null,
+                longitude: formData.longitude ? parseFloat(String(formData.longitude)) : null,
+                video_url: formData.video_url,
+                amenities: formData.amenities.split(',').map(s => s.trim()).filter(Boolean),
+                services: parsedServices,
                 image: coverUrl,
                 logo: logoUrl,
             };
@@ -120,14 +162,14 @@ const AdminControlCenter: React.FC<AdminControlCenterProps> = ({ business, onClo
             onClose();
         } catch (error) {
             console.error("Failed to save business details:", error);
-            alert("Failed to save changes.");
+            alert(`Failed to save changes. Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
         } finally {
             setIsSaving(false);
         }
     };
 
     return (
-        <motion.div 
+        <motion.div
             initial={{ y: "100%" }}
             animate={{ y: "0%" }}
             exit={{ y: "100%" }}
@@ -141,7 +183,7 @@ const AdminControlCenter: React.FC<AdminControlCenterProps> = ({ business, onClo
 
             <main className="flex-1 overflow-y-auto p-6 space-y-6">
                 <div>
-                    <label className="text-sm font-semibold text-gray-400">الوصف</label>
+                    <label className="flex items-center gap-2 text-sm font-semibold text-gray-400"><FileText size={16} />الوصف</label>
                     <textarea name="description" value={formData.description} onChange={handleChange} rows={4} className="w-full mt-2 bg-[#0A1024] border border-gray-700 rounded-lg p-2 text-white" />
                 </div>
                 
@@ -163,18 +205,60 @@ const AdminControlCenter: React.FC<AdminControlCenterProps> = ({ business, onClo
                 </div>
 
                 <div>
-                    <label className="text-sm font-semibold text-gray-400">رقم الهاتف</label>
+                    <label className="flex items-center gap-2 text-sm font-semibold text-gray-400"><Phone size={16} />رقم الهاتف</label>
                     <input name="phone" placeholder="e.g., +972501234567" value={formData.phone} onChange={handleChange} className="w-full mt-2 bg-[#0A1024] border border-gray-700 rounded-lg p-2 text-white" />
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                    <div>
+                         <label className="flex items-center gap-2 text-sm font-semibold text-gray-400"><MapPin size={16} />Latitude</label>
+                         <input name="latitude" type="number" step="any" placeholder="e.g., 32.0853" value={formData.latitude} onChange={handleChange} className="w-full mt-2 bg-[#0A1024] border border-gray-700 rounded-lg p-2 text-white" />
+                    </div>
+                    <div>
+                         <label className="flex items-center gap-2 text-sm font-semibold text-gray-400"><MapPin size={16} />Longitude</label>
+                         <input name="longitude" type="number" step="any" placeholder="e.g., 34.7818" value={formData.longitude} onChange={handleChange} className="w-full mt-2 bg-[#0A1024] border border-gray-700 rounded-lg p-2 text-white" />
+                    </div>
                 </div>
 
                 <div>
-                    <label className="text-sm font-semibold text-gray-400">روابط التواصل</label>
+                    <label className="flex items-center gap-2 text-sm font-semibold text-gray-400"><Share2 size={16} />روابط التواصل</label>
                     <div className="space-y-2 mt-2">
                         <input name="instagram" placeholder="رابط انستجرام" value={formData.instagram} onChange={handleChange} className="w-full bg-[#0A1024] border border-gray-700 rounded-lg p-2 text-white" />
                         <input name="facebook" placeholder="رابط فيسبوك" value={formData.facebook} onChange={handleChange} className="w-full bg-[#0A1024] border border-gray-700 rounded-lg p-2 text-white" />
                         <input name="website" placeholder="رابط الموقع" value={formData.website} onChange={handleChange} className="w-full bg-[#0A1024] border border-gray-700 rounded-lg p-2 text-white" />
                     </div>
                 </div>
+
+                 <div>
+                    <label className="flex items-center gap-2 text-sm font-semibold text-gray-400"><Sparkles size={16} />المميزات (مفصولة بفاصلة)</label>
+                    <input name="amenities" placeholder="e.g., Free WiFi, Shisha, Live Music" value={formData.amenities} onChange={handleChange} className="w-full mt-2 bg-[#0A1024] border border-gray-700 rounded-lg p-2 text-white" />
+                </div>
+
+                 <div>
+                    <label className="flex items-center gap-2 text-sm font-semibold text-gray-400"><Video size={16} />رابط الفيديو (Trailer)</label>
+                    <input name="video_url" placeholder="e.g., https://youtube.com/watch?v=..." value={formData.video_url} onChange={handleChange} className="w-full mt-2 bg-[#0A1024] border border-gray-700 rounded-lg p-2 text-white" />
+                </div>
+
+        <div>
+  <label className="flex items-center gap-2 text-sm font-semibold text-gray-400">
+    <ClipboardList size={16} />
+    الخدمات / المنتجات المميزة (JSON format)
+  </label>
+
+  <textarea
+    name="services"
+    value={formData.services}
+    onChange={handleChange}
+    rows={6}
+    className="w-full mt-2 bg-[#0A1024] border border-gray-700 rounded-lg p-2 text-white font-mono text-sm"
+  />
+
+  <p className="text-xs text-gray-500 mt-1">
+    Use this format:{" "}
+    <code>[{"{\"name\": \"Coffee\", \"icon\": \"Coffee\", \"price\": \"10₪\"}"}]</code>
+  </p>
+</div>
+
             </main>
 
             <footer className="flex-shrink-0 p-4 border-t border-gold/20">
@@ -186,6 +270,7 @@ const AdminControlCenter: React.FC<AdminControlCenterProps> = ({ business, onClo
     );
 };
 
+
 // --- MAIN MODAL COMPONENT ---
 const BusinessDetailModal: React.FC<BusinessDetailModalProps> = ({ business, onClose }) => {
   const [currentBusiness, setCurrentBusiness] = useState(business);
@@ -194,7 +279,7 @@ const BusinessDetailModal: React.FC<BusinessDetailModalProps> = ({ business, onC
   const { user } = useAuth();
   const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (business) {
       setCurrentBusiness(business);
       setView('info');
@@ -238,10 +323,16 @@ const BusinessDetailModal: React.FC<BusinessDetailModalProps> = ({ business, onC
   };
 
   if (!currentBusiness) return null;
+  
+  const amenityIcons: { [key: string]: LucideIcon } = {
+    'Free WiFi': Wifi,
+    'Shisha': Wind,
+  };
 
   const renderContent = () => {
-    // ✅ FIX: Check if the business is a restaurant AND if the menu is a non-empty array
     const hasMenu = isRestaurant(currentBusiness) && Array.isArray(currentBusiness.menu) && currentBusiness.menu.length > 0;
+    const hasServices = Array.isArray(currentBusiness.services) && currentBusiness.services.length > 0;
+    const hasVideo = currentBusiness.video_url;
 
     switch (view) {
       case 'info':
@@ -250,6 +341,49 @@ const BusinessDetailModal: React.FC<BusinessDetailModalProps> = ({ business, onC
             <div className="p-6 text-center">
               <p className="text-gray-400">{currentBusiness.description}</p>
             </div>
+            
+            {currentBusiness.amenities && currentBusiness.amenities.length > 0 && (
+                <div className="px-6 mb-6">
+                    <h3 className="font-bold text-lg text-gold mb-3 border-b-2 border-gold/20 pb-2">المميزات</h3>
+                    <div className="flex flex-wrap gap-3">
+                        {currentBusiness.amenities.map(amenity => {
+                            const Icon = amenityIcons[amenity] || Utensils;
+                            return (
+                                <div key={amenity} className="flex items-center gap-2 bg-gold/10 text-gold text-sm font-semibold px-3 py-1 rounded-full">
+                                    <Icon size={16} />
+                                    <span>{amenity}</span>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
+            
+            {hasServices && (
+                <div className="px-6 mb-6">
+                    <h3 className="font-bold text-lg text-gold mb-3 border-b-2 border-gold/20 pb-2">خدمات ومنتجات مميزة</h3>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        {currentBusiness.services?.map((item, index) => <ServiceGridItem key={index} item={item} />)}
+                    </div>
+                </div>
+            )}
+
+            {hasVideo && (
+                <div className="px-6 mb-6">
+                    <h3 className="font-bold text-lg text-gold mb-3 border-b-2 border-gold/20 pb-2">فيديو تعريفي</h3>
+                    <div className="aspect-video rounded-lg overflow-hidden border-2 border-gold/20">
+                        <iframe
+                            className="w-full h-full"
+                            src={`https://www.youtube.com/embed/${new URLSearchParams(new URL(currentBusiness.video_url!).search).get('v')}`}
+                            title="YouTube video player"
+                            frameBorder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                        ></iframe>
+                    </div>
+                </div>
+            )}
+            
             <div className="grid grid-cols-3 gap-4 px-6">
               {[
                 { icon: Phone, label: 'الهاتف' }, { icon: MapPin, label: 'الخريطة' }, { icon: Share2, label: 'مشاركة' },
@@ -261,7 +395,6 @@ const BusinessDetailModal: React.FC<BusinessDetailModalProps> = ({ business, onC
                 </button>
               ))}
             </div>
-            {/* ✅ FIX: Only show the "View Menu" button if there is a menu */}
             {hasMenu ? (
               <div className="p-6 mt-4">
                 <button onClick={() => setView('menu')} className="w-full bg-gold text-navy font-bold py-3 px-8 rounded-full hover:bg-yellow-300 transition-all shadow-lg shadow-gold/20 flex items-center justify-center gap-2">
@@ -270,15 +403,16 @@ const BusinessDetailModal: React.FC<BusinessDetailModalProps> = ({ business, onC
                 </button>
               </div>
             ) : (
-              <div className="p-6 text-center">
-                 <p className="text-gray-400">لا تتوفر قائمة عرض حالياً لهذا النشاط.</p>
-              </div>
+                !hasServices && (
+                    <div className="p-6 text-center">
+                        <p className="text-gray-400">لا تتوفر قائمة عرض حالياً لهذا النشاط.</p>
+                    </div>
+                )
             )}
           </>
         );
       
       case 'menu':
-        // ✅ FIX: Safely render the menu, with a fallback
         return (
           <div className="p-4 space-y-4">
             {hasMenu ? (
@@ -335,17 +469,17 @@ const BusinessDetailModal: React.FC<BusinessDetailModalProps> = ({ business, onC
                 <div className="absolute inset-0 bg-gradient-to-t from-[#0B132B] to-transparent"></div>
             </div>
 
-            <button onClick={onClose} className="absolute top-4 right-4 z-10 p-2 bg-black/30 rounded-full">
+            <button onClick={onClose} className="absolute top-4 right-4 z-30 p-2 bg-black/30 rounded-full">
               <X size={28} className="text-white" />
             </button>
             {view !== 'info' && (
-              <button onClick={() => setView(view === 'checkout' ? 'menu' : 'info')} className="absolute top-4 left-4 z-10 p-2 bg-black/30 rounded-full">
+              <button onClick={() => setView(view === 'checkout' ? 'menu' : 'info')} className="absolute top-4 left-4 z-30 p-2 bg-black/30 rounded-full">
                 <ArrowLeft size={28} className="text-white" />
               </button>
             )}
 
             {user?.role === 'admin' && (
-              <button onClick={() => setIsAdminPanelOpen(true)} className="absolute top-4 left-16 z-10 p-2 bg-black/30 rounded-full text-white hover:bg-blue-500/50 transition-colors">
+              <button onClick={() => setIsAdminPanelOpen(true)} className="absolute top-4 left-16 z-30 p-2 bg-black/30 rounded-full text-white hover:bg-blue-500/50 transition-colors">
                   <Settings size={28} />
               </button>
             )}

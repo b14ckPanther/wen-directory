@@ -31,7 +31,13 @@ export type CategorySection = {
   categories: Subcategory[];
 };
 
-
+// --- Business Features & Services ---
+export type ServiceItem = {
+    name: string;
+    description?: string;
+    price?: string;
+    icon?: string; // ✅ ADDED: Optional icon name (e.g., "Wifi", "Coffee")
+};
 
 
 // --- Shared Business & Product Types ---
@@ -67,11 +73,17 @@ type BusinessBase = {
   instagram: string | null;
   facebook: string | null;
   website: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  services: ServiceItem[] | null;
+  amenities: string[] | null;
+  gallery: string[] | null;
+  video_url: string | null;
 };
 
 // Specific type for Restaurants
 export type Restaurant = BusinessBase & {
-  menu: MenuItem[] | null; // ✅ FIX: Allow menu to be null
+  menu: MenuItem[] | null; 
   cuisine?: string;
   priceRange?: string;
 };
